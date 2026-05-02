@@ -1,0 +1,6 @@
+{
+  "appId": "com.plasticlogbook.mobile",
+  "appName": "Plastic Logbook",
+  "webDir": "build",
+  "bundledWebRuntime": false
+}
