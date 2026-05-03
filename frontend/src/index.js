@@ -19,7 +19,17 @@ reportWebVitals();
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/service-worker.js')
-      .then(reg => console.log('Service Worker registered: ', reg))
-      .catch(err => console.log('Service Worker registration failed: ', err));
+      .then(reg => {
+        console.log('✅ Service Worker V2 Ready');
+        // Force update check on load
+        reg.update();
+      })
+      .catch(err => console.error('❌ SW Error:', err));
+  });
+
+  // Listen for the new service worker taking control
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    console.log('🚀 New Version Detected! Refreshing...');
+    window.location.reload();
   });
 }

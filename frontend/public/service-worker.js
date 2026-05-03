@@ -1,34 +1,34 @@
-const CACHE_NAME = 'plastic-logbook-cache-v1';
+const CACHE_NAME = 'plastic-logbook-cache-v2';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/manifest.json',
-  '/favicon.ico',
-  '/logo192.png',
-  '/logo512.png'
+  '/manifest.json'
 ];
 
 // Install SW
 self.addEventListener('install', (event) => {
+  self.skipWaiting(); // Force the new service worker to become active immediately
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('Opened cache');
         return cache.addAll(urlsToCache);
       })
   );
 });
 
-// Listen for requests
+// Network-First Strategy (Best for fixing blank pages)
 self.addEventListener('fetch', (event) => {
   event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        if (response) {
-          return response;
-        }
-        return fetch(event.request);
+    fetch(event.request)
+      .then((res) => {
+        // If we have internet, use it and update cache
+        const resClone = res.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, resClone);
+        });
+        return res;
       })
+      .catch(() => caches.match(event.request)) // If offline, use cache
   );
 });
 
