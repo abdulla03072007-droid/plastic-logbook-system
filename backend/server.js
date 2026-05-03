@@ -41,10 +41,12 @@ app.use("/api/superadmin", superAdminRoutes);
 
 // MongoDB Connection
 // Serve static frontend build in production
-app.use(express.static(path.join(__dirname, "../frontend/build")));
-app.use((req, res) => {
+const frontendBuildPath = path.resolve(__dirname, "../frontend/build");
+app.use(express.static(frontendBuildPath));
+
+app.get("*", (req, res) => {
   if (!req.path.startsWith("/api")) {
-    res.sendFile(path.join(__dirname, "../frontend/build", "index.html"));
+    res.sendFile(path.join(frontendBuildPath, "index.html"));
   }
 });
 

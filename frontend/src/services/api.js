@@ -1,6 +1,13 @@
 import axios from "axios";
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:5000/api');
+// Detect if running on a mobile device (Capacitor)
+const isMobile = window.location.protocol === 'capacitor:';
+
+// Replace the URL below with your ACTUAL Render backend URL
+const RENDER_URL = "https://plastic-logbook-system.onrender.com/api";
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 
+                     (isMobile ? RENDER_URL : (process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:5000/api'));
 
 // Create axios instance
 const api = axios.create({

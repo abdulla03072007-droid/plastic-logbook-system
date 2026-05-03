@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Logbook",
+  "name": "Plastic Logbook System",
   "icons": [
     {
       "src": "favicon.ico",
@@ -20,7 +20,7 @@
   ],
   "start_url": "/",
   "display": "standalone",
-  "theme_color": "#2563eb",
-  "background_color": "#ffffff",
+  "theme_color": "#1e3a8a",
+  "background_color": "#f8fafc",
   "orientation": "portrait"
 }
