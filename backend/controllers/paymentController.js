@@ -1,12 +1,13 @@
 const Payment = require("../models/Payment");
+const Customer = require("../models/Customer");
 
 // CREATE PAYMENT
 exports.createPayment = async (req, res) => {
   try {
-    const { customerName, shopName, totalBill, paidAmount, paymentDate } = req.body;
+    const { customerId, customerName, shopName, totalBill, paidAmount, paymentDate } = req.body;
 
     // Validate input
-    if (!customerName || !shopName || !totalBill) {
+    if (!customerId || !customerName || !shopName || !totalBill) {
       return res.status(400).json({
         success: false,
         message: "All required fields must be provided"
@@ -24,6 +25,7 @@ exports.createPayment = async (req, res) => {
 
     const newPayment = new Payment({
       adminId: req.admin.id,
+      customerId,
       customerName,
       shopName,
       totalBill: total,
@@ -34,6 +36,15 @@ exports.createPayment = async (req, res) => {
     });
 
     await newPayment.save();
+
+    // SYNC CUSTOMER TOTAL DUE WITH LATEST PAYMENT
+    const lastPayment = await Payment.findOne({ customerId, adminId: req.admin.id })
+      .sort({ createdAt: -1 });
+    
+    await Customer.findOneAndUpdate(
+      { _id: customerId, adminId: req.admin.id },
+      { totalDue: lastPayment ? lastPayment.dueAmount : 0 }
+    );
 
     return res.status(201).json({
       success: true,
@@ -150,6 +161,15 @@ exports.updatePayment = async (req, res) => {
 
     await payment.save();
 
+    // SYNC CUSTOMER TOTAL DUE WITH LATEST PAYMENT
+    const lastPayment = await Payment.findOne({ customerId: payment.customerId, adminId: req.admin.id })
+      .sort({ createdAt: -1 });
+    
+    await Customer.findOneAndUpdate(
+      { _id: payment.customerId, adminId: req.admin.id },
+      { totalDue: lastPayment ? lastPayment.dueAmount : 0 }
+    );
+
     return res.status(200).json({
       success: true,
       message: "Payment updated successfully",
@@ -176,6 +196,22 @@ exports.deletePayment = async (req, res) => {
         success: false,
         message: "Payment not found"
       });
+    }
+
+    // UPDATE CUSTOMER TOTAL DUE (Optional: reset to a previous state? 
+    // Usually, we just want to ensure the customer record reflects reality.
+    // If we delete the latest payment, we might want to revert the totalDue.
+    // But we don't have history easily. Let's at least try to sync if possible.)
+    const customer = await Customer.findOne({ _id: payment.customerId, adminId: req.admin.id });
+    if (customer) {
+      // Subtract the due that was added by this payment
+      // Wait, our logic is customer.totalDue = payment.dueAmount.
+      // If we delete it, we should probably find the previous payment's due.
+      const lastPayment = await Payment.findOne({ customerId: payment.customerId, adminId: req.admin.id })
+        .sort({ createdAt: -1 });
+      
+      customer.totalDue = lastPayment ? lastPayment.dueAmount : 0;
+      await customer.save();
     }
 
     return res.status(200).json({

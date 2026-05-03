@@ -106,6 +106,7 @@ function Reports() {
                     <th>Due Amount</th>
                     <th>Date</th>
                     <th>Status</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -115,7 +116,7 @@ function Reports() {
                       style={{
                         background:
                           Number(item.dueAmount) > 1000
-                            ? "rgba(239,68,68,0.04)"
+                            ? "rgba(239,68,68,0.06)"
                             : "transparent",
                       }}
                     >
@@ -144,6 +145,26 @@ function Reports() {
                         <span className={`badge ${item.paymentStatus === "Pending" ? "badge-warning" : "badge-info"}`}>
                           {item.paymentStatus === "Pending" ? "⏳ Pending" : "🌓 Partial"}
                         </span>
+                      </td>
+                      <td>
+                        <div style={{ display: "flex", gap: "10px" }}>
+                          <a 
+                            href={`/payments?search=${item.customerName}`}
+                            className="btn btn-primary btn-sm"
+                            style={{ padding: "4px 8px", fontSize: 11, textDecoration: "none" }}
+                            title="Go to Payments"
+                          >
+                            💸 Pay Now
+                          </a>
+                          <button 
+                            className="btn btn-secondary btn-sm"
+                            style={{ padding: "4px 8px", fontSize: 11 }}
+                            onClick={() => window.open(`https://wa.me/?text=Hello ${item.customerName}, your pending balance is ₹${item.dueAmount}. Please clear it soon.`)}
+                            title="Send WhatsApp Reminder"
+                          >
+                            💬
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

@@ -3,6 +3,8 @@ import Sidebar from "../components/Sidebar";
 import Toast from "../components/Toast";
 import useToast from "../components/useToast";
 import { paymentAPI, customerAPI } from "../services/api";
+import { jsPDF } from "jspdf";
+import "jspdf-autotable";
 import "../styles/Common.css";
 
 const getEmptyForm = () => ({
@@ -51,9 +53,10 @@ function Payments() {
         customerId:   id,
         customerName: cus.customerName || "",
         shopName:     cus.shopName     || "",
+        totalBill:    cus.totalDue     || "", // Pre-fill with current due balance
       });
     } else {
-      setFormData({ ...formData, customerId: "", customerName: "", shopName: "" });
+      setFormData({ ...formData, customerId: "", customerName: "", shopName: "", totalBill: "" });
     }
   };
 
@@ -76,8 +79,13 @@ function Payments() {
         await paymentAPI.updatePayment(editingId, formData);
         addToast("Payment updated successfully!", "success");
       } else {
-        await paymentAPI.createPayment(formData);
+        const res = await paymentAPI.createPayment(formData);
         addToast("Payment recorded successfully!", "success");
+        
+        // AUTOMATICALLY GENERATE PDF AFTER ADDING
+        if (res.data && res.data.payment) {
+          generatePDF(res.data.payment);
+        }
       }
       clearForm();
       fetchPayments();
@@ -86,16 +94,62 @@ function Payments() {
     }
   };
 
+  const handleQuickPay = async (item) => {
+    if (item.dueAmount <= 0) {
+      addToast("Balance is already zero!", "info");
+      return;
+    }
+
+    try {
+      addToast("Processing full payment...", "info");
+      
+      const quickData = {
+        customerId:   item.customerId,
+        customerName: item.customerName,
+        shopName:     item.shopName,
+        totalBill:    item.dueAmount,
+        paidAmount:   item.dueAmount, // Pay everything
+        paymentDate:  new Date().toISOString().split("T")[0],
+      };
+
+      const res = await paymentAPI.createPayment(quickData);
+      addToast("Full payment recorded!", "success");
+      
+      // DOWNLOAD STATEMENT AUTOMATICALLY
+      if (res.data && res.data.payment) {
+        generatePDF(res.data.payment);
+      }
+
+      fetchPayments(); // Refresh list
+    } catch (err) {
+      console.error(err);
+      addToast("Quick pay failed.", "error");
+    }
+  };
+
+  const handlePayRemaining = (item) => {
+    setFormData({
+      customerId:   item.customerId   || "",
+      customerName: item.customerName || "",
+      shopName:     item.shopName     || "",
+      totalBill:    item.dueAmount    || "", // New bill starts with the remaining balance
+      paidAmount:   "",                  // Clear for fresh payment
+      paymentDate:  new Date().toISOString().split("T")[0],
+    });
+    setEditingId(null); // Create a NEW record
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const handleEdit = (item) => {
     setFormData({
       customerId:   item.customerId   || "",
       customerName: item.customerName || "",
       shopName:     item.shopName     || "",
-      totalBill:    item.totalBill    || "",
-      paidAmount:   item.paidAmount   || "",
-      paymentDate:  item.paymentDate  || "",
+      totalBill:    item.dueAmount    || "", // Use remaining due as the bill for editing
+      paidAmount:   "",                  // Clear paid for new entry
+      paymentDate:  new Date().toISOString().split("T")[0],
     });
-    setEditingId(item._id);
+    setEditingId(item._id); // Update THIS record
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -108,6 +162,136 @@ function Payments() {
     } catch {
       addToast("Delete failed.", "error");
       setDeleteId(null);
+    }
+  };
+
+  const generatePDF = async (item) => {
+    try {
+      addToast("Generating Statement...", "info");
+      
+      // Fetch all payments for this customer to show history
+      const res = await paymentAPI.getAllPayments(item.customerName);
+      let allHistory = [];
+      
+      if (res.data && res.data.payments) {
+        allHistory = res.data.payments.filter(p => {
+          const nameMatch = p.customerName?.trim().toLowerCase() === item.customerName?.trim().toLowerCase();
+          const shopMatch = p.shopName?.trim().toLowerCase() === item.shopName?.trim().toLowerCase();
+          return p.customerId === item.customerId || (nameMatch && shopMatch);
+        });
+      } else if (Array.isArray(res.data)) {
+        allHistory = res.data.filter(p => {
+          const nameMatch = p.customerName?.trim().toLowerCase() === item.customerName?.trim().toLowerCase();
+          const shopMatch = p.shopName?.trim().toLowerCase() === item.shopName?.trim().toLowerCase();
+          return p.customerId === item.customerId || (nameMatch && shopMatch);
+        });
+      }
+
+      // Sort by date (oldest first) for the table
+      allHistory.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+      addToast(`Found ${allHistory.length} history records.`, "info");
+
+      const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const pageW = 210;
+
+      // ── Header Section ──────────────────────────────────────────
+      doc.setFillColor(30, 58, 138); // Deep Navy
+      doc.rect(0, 0, pageW, 35, "F");
+      
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(22);
+      doc.setTextColor(255, 255, 255);
+      doc.text("STATEMENT OF ACCOUNT", 15, 22);
+      
+      doc.setFontSize(9);
+      doc.setTextColor(200, 210, 255);
+      doc.text("PLASTIC LOGBOOK SYSTEM - BUSINESS MANAGEMENT", 15, 30);
+      doc.text(`DATE: ${new Date().toLocaleDateString()}`, pageW - 15, 22, { align: "right" });
+
+      // ── Customer Info Box ────────────────────────────────────────
+      doc.setFillColor(248, 250, 252);
+      doc.roundedRect(10, 45, 190, 30, 2, 2, "F");
+      
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139);
+      doc.text("BILL TO:", 15, 54);
+      
+      doc.setFontSize(12);
+      doc.setTextColor(15, 23, 42);
+      doc.text(`${item.customerName} - ${item.shopName}`, 15, 64);
+      
+      // Status Badge
+      const statusColor = item.dueAmount <= 0 ? [22, 163, 74] : [220, 38, 38];
+      doc.setFillColor(...statusColor);
+      doc.roundedRect(160, 52, 30, 10, 1, 1, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(9);
+      doc.text(item.dueAmount <= 0 ? "PAID" : "DUE", 175, 58.5, { align: "center" });
+
+      // ── Ledger Section ───────────────────────────────────────────
+      let currentY = 105;
+      doc.setFontSize(12);
+      doc.setTextColor(71, 85, 105);
+      doc.text("TRANSACTION LEDGER", 15, currentY - 8);
+      doc.line(15, currentY - 4, pageW - 15, currentY - 4);
+
+      if (allHistory && allHistory.length > 0) {
+        // Initial Starting Point
+        const first = allHistory[0];
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(15, 23, 42);
+        doc.text("Opening Balance / First Bill", 15, currentY);
+        doc.text(`Rs. ${Number(first.totalBill || 0).toFixed(2)}`, 195, currentY, { align: "right" });
+        currentY += 15;
+
+        // History Steps
+        allHistory.forEach((p, idx) => {
+          // Pay Line
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(100, 116, 139);
+          doc.text(`Payment received on ${p.paymentDate}`, 25, currentY);
+          doc.setTextColor(15, 23, 42);
+          doc.text(`- ${Number(p.paidAmount || 0).toFixed(2)}`, 195, currentY, { align: "right" });
+          
+          currentY += 6;
+          
+          // Subtotal/Remaining Line
+          doc.setFillColor(241, 245, 249);
+          doc.rect(130, currentY, 70, 8, "F");
+          doc.setFont("helvetica", "bold");
+          doc.text("Remaining:", 135, currentY + 6);
+          doc.text(`${Number(p.dueAmount || 0).toFixed(2)}`, 195, currentY + 6, { align: "right" });
+          
+          currentY += 15;
+
+          if (currentY > 260) {
+            doc.addPage();
+            currentY = 20;
+          }
+        });
+      }
+
+      // ── Final Total Highlighting ────────────────────────────────
+      doc.setFillColor(30, 58, 138);
+      doc.roundedRect(130, currentY, 70, 15, 1, 1, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(14);
+      doc.text(`DUE: Rs. ${Number(item.dueAmount || 0).toFixed(2)}`, 165, currentY + 9.5, { align: "center" });
+
+      // ── Footer ──────────────────────────────────────────────────
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(9);
+      doc.setTextColor(148, 163, 184);
+      doc.text("This is a computer-generated statement. No signature required.", pageW / 2, 285, { align: "center" });
+      doc.text("Thank you for your business!", pageW / 2, 290, { align: "center" });
+
+      // Save
+      doc.save(`Statement_${(item.customerName || "Customer").replace(/\s+/g, "_")}.pdf`);
+      addToast("PDF generated successfully!", "success");
+    } catch (err) {
+      console.error("PDF Error:", err);
+      addToast("Failed to generate PDF. Please try again.", "error");
     }
   };
 
@@ -165,15 +349,26 @@ function Payments() {
             </div>
 
             <div className="form-group">
-              <label>Total Bill (₹)</label>
+              <label>{editingId ? "Edit Bill Amount (₹)" : "Opening Balance / New Bill (₹)"}</label>
               <input
                 type="number"
                 name="totalBill"
-                placeholder="Enter total amount"
+                placeholder="Enter amount"
                 value={formData.totalBill}
                 onChange={handleChange}
               />
             </div>
+
+            {formData.customerId && (
+              <div style={{ marginBottom: 15, fontSize: 13 }}>
+                <span style={{ color: "var(--text-light)" }}>Current Outstanding: </span>
+                <span style={{ fontWeight: 700, color: "var(--error)" }}>
+                  ₹{customers.find(c => c._id === formData.customerId)?.totalDue || 0}
+                </span>
+              </div>
+            )}
+
+             {/* Only one bill amount field needed */}
 
             <div className="form-group">
               <label>Paid Amount (₹)</label>
@@ -301,14 +496,23 @@ function Payments() {
                             <button
                               className="btn btn-secondary btn-sm"
                               onClick={() => handleEdit(item)}
+                              title="Edit Record"
                             >
-                              ✏️ Edit
+                              ✏️
                             </button>
                             <button
                               className="btn btn-danger btn-sm"
                               onClick={() => setDeleteId(item._id)}
+                              title="Delete"
                             >
                               🗑
+                            </button>
+                            <button
+                              className="btn btn-primary btn-sm"
+                              onClick={() => generatePDF(item)}
+                              title="Download Statement"
+                            >
+                              📄 PDF
                             </button>
                           </div>
                         </td>

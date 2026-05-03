@@ -4,7 +4,7 @@ const Purchase = require("../models/Purchase");
 // @route   POST /api/purchases/add
 exports.addPurchase = async (req, res) => {
   try {
-    const { companyName, purchaseDate, items } = req.body;
+    const { companyName, purchaseDate, items, paidAmount } = req.body;
 
     if (!companyName || !purchaseDate || !items || items.length === 0) {
       return res.status(400).json({ message: "Company name, date, and at least one item are required." });
@@ -23,12 +23,17 @@ exports.addPurchase = async (req, res) => {
       };
     });
 
+    const paid = Number(paidAmount) || 0;
+    const dueAmount = grandTotal - paid;
+
     const newPurchase = new Purchase({
       adminId: req.admin.id,
       companyName,
       purchaseDate,
       items: processedItems,
-      grandTotal
+      grandTotal,
+      paidAmount: paid,
+      dueAmount
     });
 
     const savedPurchase = await newPurchase.save();
@@ -54,7 +59,7 @@ exports.getPurchases = async (req, res) => {
 exports.updatePurchase = async (req, res) => {
   try {
     const { id } = req.params;
-    const { companyName, purchaseDate, items } = req.body;
+    const { companyName, purchaseDate, items, paidAmount } = req.body;
 
     if (!companyName || !purchaseDate || !items || items.length === 0) {
       return res.status(400).json({ message: "Company name, date, and at least one item are required." });
@@ -72,9 +77,12 @@ exports.updatePurchase = async (req, res) => {
       };
     });
 
+    const paid = Number(paidAmount) || 0;
+    const dueAmount = grandTotal - paid;
+
     const updatedPurchase = await Purchase.findOneAndUpdate(
       { _id: id, adminId: req.admin.id },
-      { companyName, purchaseDate, items: processedItems, grandTotal },
+      { companyName, purchaseDate, items: processedItems, grandTotal, paidAmount: paid, dueAmount },
       { new: true, runValidators: true }
     );
 

@@ -7,6 +7,11 @@ const paymentSchema = new mongoose.Schema(
       ref: "Admin",
       required: true
     },
+    customerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Customer",
+      required: true
+    },
     customerName: {
       type: String,
       required: true,

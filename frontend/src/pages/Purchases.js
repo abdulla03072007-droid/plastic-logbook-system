@@ -12,7 +12,8 @@ const getEmptyForm = () => ({
   purchaseDate: new Date().toISOString().split("T")[0],
   items: [
     { productName: "", quantity: "", price: "" }
-  ]
+  ],
+  paidAmount: ""
 });
 
 function Purchases() {
@@ -113,7 +114,8 @@ function Purchases() {
         productName: i.productName,
         quantity: i.quantity,
         price: i.price
-      }))
+      })),
+      paidAmount: item.paidAmount || ""
     });
     setEditingId(item._id);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -231,6 +233,14 @@ function Purchases() {
       doc.setFontSize(13);
       doc.setTextColor(255, 255, 255);
       doc.text(`Grand Total: Rs. ${Number(bill.grandTotal || 0).toFixed(2)}`, 160, finalY + 19, { align: "center" });
+
+      // ── Billing Summary ──────────────────────────────────────────
+      doc.setFontSize(10);
+      doc.setTextColor(15, 23, 42);
+      doc.text(`Paid Amount: Rs. ${Number(bill.paidAmount || 0).toFixed(2)}`, 120, finalY + 34);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(220, 38, 38); // red
+      doc.text(`Due Amount: Rs. ${Number(bill.dueAmount || 0).toFixed(2)}`, 120, finalY + 41);
 
       // ── Footer Bar ───────────────────────────────────────────────
       doc.setFillColor(30, 58, 138);
@@ -370,18 +380,32 @@ function Purchases() {
 
             <div
               style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr 1fr",
+                gap: "15px",
                 padding: "15px",
                 background: "var(--info-light)",
                 borderRadius: "var(--radius-sm)",
-                fontSize: 16,
-                fontWeight: 700,
-                color: "#0369a1",
                 marginBottom: 20,
-                textAlign: "right",
                 border: "1px solid #bae6fd"
               }}
             >
-              Grand Total: ₹{calculateGrandTotal()}
+              <div style={{ fontSize: 16, fontWeight: 700, color: "#0369a1" }}>
+                Total: ₹{calculateGrandTotal()}
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <input
+                  type="number"
+                  name="paidAmount"
+                  placeholder="Amount Paid"
+                  value={formData.paidAmount}
+                  onChange={handleChange}
+                  style={{ marginBottom: 0, padding: "8px" }}
+                />
+              </div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: "#92400e" }}>
+                Due: ₹{(parseFloat(calculateGrandTotal()) - (parseFloat(formData.paidAmount) || 0)).toFixed(2)}
+              </div>
             </div>
 
             <div className="form-actions">
@@ -420,6 +444,8 @@ function Purchases() {
                       <th>Date</th>
                       <th>Items</th>
                       <th>Grand Total</th>
+                      <th>Paid</th>
+                      <th>Due</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
