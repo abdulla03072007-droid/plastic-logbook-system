@@ -18,7 +18,7 @@ exports.createPayment = async (req, res) => {
     const paid = Number(paidAmount) || 0;
     const total = Number(totalBill);
     const dueAmount = total - paid;
-    
+
     let paymentStatus = "Pending";
     if (paid > 0 && paid < total) paymentStatus = "Partial";
     if (paid >= total) paymentStatus = "Paid";
@@ -40,7 +40,7 @@ exports.createPayment = async (req, res) => {
     // SYNC CUSTOMER TOTAL DUE WITH LATEST PAYMENT
     const lastPayment = await Payment.findOne({ customerId, adminId: req.admin.id })
       .sort({ createdAt: -1 });
-    
+
     await Customer.findOneAndUpdate(
       { _id: customerId, adminId: req.admin.id },
       { totalDue: lastPayment ? lastPayment.dueAmount : 0 }
@@ -66,7 +66,7 @@ exports.getAllPayments = async (req, res) => {
     const { search, status } = req.query;
 
     let query = { adminId: req.admin.id };
-    
+
     if (search) {
       query.$and = [
         { adminId: req.admin.id },
@@ -164,7 +164,7 @@ exports.updatePayment = async (req, res) => {
     // SYNC CUSTOMER TOTAL DUE WITH LATEST PAYMENT
     const lastPayment = await Payment.findOne({ customerId: payment.customerId, adminId: req.admin.id })
       .sort({ createdAt: -1 });
-    
+
     await Customer.findOneAndUpdate(
       { _id: payment.customerId, adminId: req.admin.id },
       { totalDue: lastPayment ? lastPayment.dueAmount : 0 }
@@ -209,7 +209,7 @@ exports.deletePayment = async (req, res) => {
       // If we delete it, we should probably find the previous payment's due.
       const lastPayment = await Payment.findOne({ customerId: payment.customerId, adminId: req.admin.id })
         .sort({ createdAt: -1 });
-      
+
       customer.totalDue = lastPayment ? lastPayment.dueAmount : 0;
       await customer.save();
     }

@@ -9,12 +9,12 @@ import "jspdf-autotable";
 import "../styles/Common.css";
 
 const getEmptyForm = () => ({
-  customerId:   "",
+  customerId: "",
   customerName: "",
-  shopName:     "",
-  totalBill:    "",
-  paidAmount:   "",
-  paymentDate:  new Date().toISOString().split("T")[0],
+  shopName: "",
+  totalBill: "",
+  paidAmount: "",
+  paymentDate: new Date().toISOString().split("T")[0],
 });
 
 function Payments() {
@@ -23,11 +23,11 @@ function Payments() {
   const initialSearch = queryParams.get("search") || "";
 
   const [customers, setCustomers] = useState([]);
-  const [payments,  setPayments]  = useState([]);
-  const [formData,  setFormData]  = useState(getEmptyForm());
+  const [payments, setPayments] = useState([]);
+  const [formData, setFormData] = useState(getEmptyForm());
   const [editingId, setEditingId] = useState(null);
-  const [deleteId,  setDeleteId]  = useState(null);
-  const [search,    setSearch]    = useState(initialSearch);
+  const [deleteId, setDeleteId] = useState(null);
+  const [search, setSearch] = useState(initialSearch);
   const { toasts, addToast, removeToast } = useToast();
 
   const fetchCustomers = async () => {
@@ -50,15 +50,15 @@ function Payments() {
   }, [search]);
 
   const handleCustomerSelect = (e) => {
-    const id  = e.target.value;
+    const id = e.target.value;
     const cus = customers.find((c) => c._id === id);
     if (cus) {
       setFormData({
         ...formData,
-        customerId:   id,
+        customerId: id,
         customerName: cus.customerName || "",
-        shopName:     cus.shopName     || "",
-        totalBill:    cus.totalDue     || "", // Pre-fill with current due balance
+        shopName: cus.shopName || "",
+        totalBill: cus.totalDue || "", // Pre-fill with current due balance
       });
     } else {
       setFormData({ ...formData, customerId: "", customerName: "", shopName: "", totalBill: "" });
@@ -86,7 +86,7 @@ function Payments() {
       } else {
         const res = await paymentAPI.createPayment(formData);
         addToast("Payment recorded successfully!", "success");
-        
+
         // AUTOMATICALLY GENERATE PDF AFTER ADDING
         if (res.data && res.data.payment) {
           generatePDF(res.data.payment);
@@ -107,19 +107,19 @@ function Payments() {
 
     try {
       addToast("Processing full payment...", "info");
-      
+
       const quickData = {
-        customerId:   item.customerId,
+        customerId: item.customerId,
         customerName: item.customerName,
-        shopName:     item.shopName,
-        totalBill:    item.dueAmount,
-        paidAmount:   item.dueAmount, // Pay everything
-        paymentDate:  new Date().toISOString().split("T")[0],
+        shopName: item.shopName,
+        totalBill: item.dueAmount,
+        paidAmount: item.dueAmount, // Pay everything
+        paymentDate: new Date().toISOString().split("T")[0],
       };
 
       const res = await paymentAPI.createPayment(quickData);
       addToast("Full payment recorded!", "success");
-      
+
       // DOWNLOAD STATEMENT AUTOMATICALLY
       if (res.data && res.data.payment) {
         generatePDF(res.data.payment);
@@ -134,12 +134,12 @@ function Payments() {
 
   const handlePayRemaining = (item) => {
     setFormData({
-      customerId:   item.customerId   || "",
+      customerId: item.customerId || "",
       customerName: item.customerName || "",
-      shopName:     item.shopName     || "",
-      totalBill:    item.dueAmount    || "", // New bill starts with the remaining balance
-      paidAmount:   "",                  // Clear for fresh payment
-      paymentDate:  new Date().toISOString().split("T")[0],
+      shopName: item.shopName || "",
+      totalBill: item.dueAmount || "", // New bill starts with the remaining balance
+      paidAmount: "",                  // Clear for fresh payment
+      paymentDate: new Date().toISOString().split("T")[0],
     });
     setEditingId(null); // Create a NEW record
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -147,12 +147,12 @@ function Payments() {
 
   const handleEdit = (item) => {
     setFormData({
-      customerId:   item.customerId   || "",
+      customerId: item.customerId || "",
       customerName: item.customerName || "",
-      shopName:     item.shopName     || "",
-      totalBill:    item.dueAmount    || "", // Use remaining due as the bill for editing
-      paidAmount:   "",                  // Clear paid for new entry
-      paymentDate:  new Date().toISOString().split("T")[0],
+      shopName: item.shopName || "",
+      totalBill: item.dueAmount || "", // Use remaining due as the bill for editing
+      paidAmount: "",                  // Clear paid for new entry
+      paymentDate: new Date().toISOString().split("T")[0],
     });
     setEditingId(item._id); // Update THIS record
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -173,11 +173,11 @@ function Payments() {
   const generatePDF = async (item) => {
     try {
       addToast("Generating Statement...", "info");
-      
+
       // Fetch all payments for this customer to show history
       const res = await paymentAPI.getAllPayments(item.customerName);
       let allHistory = [];
-      
+
       if (res.data && res.data.payments) {
         allHistory = res.data.payments.filter(p => {
           const nameMatch = p.customerName?.trim().toLowerCase() === item.customerName?.trim().toLowerCase();
@@ -203,12 +203,12 @@ function Payments() {
       // ── Header Section ──────────────────────────────────────────
       doc.setFillColor(30, 58, 138); // Deep Navy
       doc.rect(0, 0, pageW, 35, "F");
-      
+
       doc.setFont("helvetica", "bold");
       doc.setFontSize(22);
       doc.setTextColor(255, 255, 255);
       doc.text("STATEMENT OF ACCOUNT", 15, 22);
-      
+
       doc.setFontSize(9);
       doc.setTextColor(200, 210, 255);
       doc.text("PLASTIC LOGBOOK SYSTEM - BUSINESS MANAGEMENT", 15, 30);
@@ -217,15 +217,15 @@ function Payments() {
       // ── Customer Info Box ────────────────────────────────────────
       doc.setFillColor(248, 250, 252);
       doc.roundedRect(10, 45, 190, 30, 2, 2, "F");
-      
+
       doc.setFontSize(10);
       doc.setTextColor(100, 116, 139);
       doc.text("BILL TO:", 15, 54);
-      
+
       doc.setFontSize(12);
       doc.setTextColor(15, 23, 42);
       doc.text(`${item.customerName} - ${item.shopName}`, 15, 64);
-      
+
       // Status Badge
       const statusColor = item.dueAmount <= 0 ? [22, 163, 74] : [220, 38, 38];
       doc.setFillColor(...statusColor);
@@ -255,7 +255,7 @@ function Payments() {
 
         allHistory.forEach((p, idx) => {
           const currentBill = Number(p.totalBill || 0);
-          
+
           // If a new bill was added (Current Bill > Last Due), show the addition
           if (idx > 0 && currentBill > lastDue) {
             const addedAmount = currentBill - lastDue;
@@ -264,7 +264,7 @@ function Payments() {
             doc.text(`+ New Bill Added`, 25, currentY);
             doc.text(`+ ${addedAmount.toFixed(2)}`, 195, currentY, { align: "right" });
             currentY += 8;
-            
+
             doc.setFont("helvetica", "bold");
             doc.text(`Subtotal: ${currentBill.toFixed(2)}`, 195, currentY, { align: "right" });
             currentY += 12;
@@ -276,21 +276,21 @@ function Payments() {
           doc.text(`Payment received on ${p.paymentDate}`, 25, currentY);
           doc.setTextColor(15, 23, 42);
           doc.text(`- ${Number(p.paidAmount || 0).toFixed(2)}`, 195, currentY, { align: "right" });
-          
+
           currentY += 6;
-          
+
           // Subtotal/Remaining Line
           doc.setFillColor(241, 245, 249);
           doc.rect(130, currentY, 70, 8, "F");
           doc.setFont("helvetica", "bold");
-          
+
           const due = Number(p.dueAmount || 0);
           const label = due < 0 ? "Advanced:" : "Remaining:";
           const displayDue = Math.abs(due).toFixed(2);
 
           doc.text(label, 135, currentY + 6);
           doc.text(`${due < 0 ? "-" : ""}${displayDue}`, 195, currentY + 6, { align: "right" });
-          
+
           lastDue = due;
           currentY += 15;
 
@@ -328,7 +328,7 @@ function Payments() {
   };
 
   const statusBadge = (status) => {
-    if (status === "Paid")    return <span className="badge badge-success">✓ Paid</span>;
+    if (status === "Paid") return <span className="badge badge-success">✓ Paid</span>;
     if (status === "Pending") return <span className="badge badge-warning">⏳ Pending</span>;
     if (status === "Partial") return <span className="badge badge-info">🌓 Partial</span>;
     return <span className="badge badge-info">{status}</span>;
@@ -400,7 +400,7 @@ function Payments() {
               </div>
             )}
 
-             {/* Only one bill amount field needed */}
+            {/* Only one bill amount field needed */}
 
             <div className="form-group">
               <label>Paid Amount (₹)</label>
