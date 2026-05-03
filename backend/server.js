@@ -50,18 +50,20 @@ app.get("*", (req, res) => {
   }
 });
 
-mongoose.connect(process.env.MONGO_URI, {
+const PORT = process.env.PORT || 10000;
+
+mongoose.connect(process.env.MONGO_URI || "", {
   serverSelectionTimeoutMS: 30000
 })
 .then(() => {
-  console.log("MongoDB Connected");
+  console.log("✅ MongoDB Connected Successfully");
 
-  app.listen(process.env.PORT, () => {
-    console.log(
-      `Server running on port ${process.env.PORT}`
-    );
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`🚀 Server is live on port ${PORT}`);
   });
 })
 .catch((err) => {
-  console.log("MongoDB Error:", err);
+  console.error("❌ MongoDB Connection Error:", err.message);
+  // Fail gracefully so the process doesn't just hang
+  process.exit(1);
 });
