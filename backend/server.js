@@ -39,15 +39,13 @@ app.use("/api/reports", reportRoutes);
 app.use("/api/superadmin", superAdminRoutes);
 
 
-// MongoDB Connection
-// Serve static frontend build in production
+// Serve static frontend build
 const frontendBuildPath = path.resolve(__dirname, "../frontend/build");
 app.use(express.static(frontendBuildPath));
 
+// Final catch-all for React Routing (Must be after API routes)
 app.get("*", (req, res) => {
-  if (!req.path.startsWith("/api")) {
-    res.sendFile(path.join(frontendBuildPath, "index.html"));
-  }
+  res.sendFile(path.join(frontendBuildPath, "index.html"));
 });
 
 const PORT = process.env.PORT || 10000;
