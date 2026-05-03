@@ -644,17 +644,86 @@
 }
 
 /* ─── Responsive ─────────────────────────────────────────── */
-@media (max-width: 768px) {
-  .sidebar {
-    width: 64px;
+@media (max-width: 1024px) {
+  .page-body {
+    grid-template-columns: 1fr;
   }
-  .sidebar-brand-text,
-  .nav-label,
-  .admin-info,
-  .sidebar-section-label {
+}
+
+@media (max-width: 768px) {
+  .layout {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+    sticky: top;
+    z-index: 50;
+  }
+  
+  .sidebar-nav {
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 8px;
+    gap: 8px;
+  }
+  
+  .sidebar-section-label, 
+  .sidebar-footer,
+  .sidebar-brand-text {
     display: none;
   }
+  
+  .nav-link {
+    padding: 8px 12px;
+    white-space: nowrap;
+  }
+
   .main-content {
     padding: 20px 16px;
+  }
+
+  .stat-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .list-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .search-box {
+    max-width: 100%;
+  }
+
+  /* Make tables scrollable on mobile */
+  .list-card {
+    overflow-x: auto;
+  }
+  
+  .data-table {
+    min-width: 600px;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+  .welcome-bar h1 {
+    font-size: 20px;
+  }
+  
+  .stat-value {
+    font-size: 22px;
   }
 }

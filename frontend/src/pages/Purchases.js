@@ -96,8 +96,13 @@ function Purchases() {
         await purchaseAPI.updatePurchase(editingId, formData);
         addToast("Purchase bill updated successfully!", "success");
       } else {
-        await purchaseAPI.addPurchase(formData);
+        const res = await purchaseAPI.addPurchase(formData);
         addToast("Purchase bill recorded successfully!", "success");
+
+        // AUTOMATICALLY GENERATE PDF AFTER ADDING
+        if (res.data && res.data.purchase) {
+          generatePDF(res.data.purchase);
+        }
       }
       clearForm();
       fetchPurchases();
@@ -462,29 +467,37 @@ function Purchases() {
                         <td>
                           <span className="badge badge-info">{bill.items.length} items</span>
                         </td>
-                        <td style={{ color: "var(--success)", fontWeight: 700 }}>
+                         <td style={{ color: "var(--success)", fontWeight: 700 }}>
                           ₹{Number(bill.grandTotal).toFixed(2)}
+                        </td>
+                        <td style={{ fontWeight: 600 }}>
+                          ₹{Number(bill.paidAmount || 0).toFixed(2)}
+                        </td>
+                        <td style={{ color: "var(--error)", fontWeight: 700 }}>
+                          ₹{Number(bill.dueAmount || 0).toFixed(2)}
                         </td>
                         <td>
                           <div className="table-actions">
                             <button
-                              className="btn btn-primary btn-sm"
-                              onClick={() => generatePDF(bill)}
-                              title="Download PDF Invoice"
-                            >
-                              📄 PDF
-                            </button>
-                            <button
                               className="btn btn-secondary btn-sm"
                               onClick={() => handleEdit(bill)}
+                              title="Edit"
                             >
                               ✏️
                             </button>
                             <button
                               className="btn btn-danger btn-sm"
                               onClick={() => setDeleteId(bill._id)}
+                              title="Delete"
                             >
                               🗑
+                            </button>
+                            <button
+                              className="btn btn-primary btn-sm"
+                              onClick={() => generatePDF(bill)}
+                              title="Download PDF Invoice"
+                            >
+                              📄 PDF
                             </button>
                           </div>
                         </td>

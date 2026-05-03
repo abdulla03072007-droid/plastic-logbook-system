@@ -251,7 +251,25 @@ function Payments() {
         currentY += 15;
 
         // History Steps
+        let lastDue = Number(first.totalBill || 0);
+
         allHistory.forEach((p, idx) => {
+          const currentBill = Number(p.totalBill || 0);
+          
+          // If a new bill was added (Current Bill > Last Due), show the addition
+          if (idx > 0 && currentBill > lastDue) {
+            const addedAmount = currentBill - lastDue;
+            doc.setFont("helvetica", "italic");
+            doc.setTextColor(15, 23, 42);
+            doc.text(`+ New Bill Added`, 25, currentY);
+            doc.text(`+ ${addedAmount.toFixed(2)}`, 195, currentY, { align: "right" });
+            currentY += 8;
+            
+            doc.setFont("helvetica", "bold");
+            doc.text(`Subtotal: ${currentBill.toFixed(2)}`, 195, currentY, { align: "right" });
+            currentY += 12;
+          }
+
           // Pay Line
           doc.setFont("helvetica", "normal");
           doc.setTextColor(100, 116, 139);
@@ -265,9 +283,15 @@ function Payments() {
           doc.setFillColor(241, 245, 249);
           doc.rect(130, currentY, 70, 8, "F");
           doc.setFont("helvetica", "bold");
-          doc.text("Remaining:", 135, currentY + 6);
-          doc.text(`${Number(p.dueAmount || 0).toFixed(2)}`, 195, currentY + 6, { align: "right" });
           
+          const due = Number(p.dueAmount || 0);
+          const label = due < 0 ? "Advanced:" : "Remaining:";
+          const displayDue = Math.abs(due).toFixed(2);
+
+          doc.text(label, 135, currentY + 6);
+          doc.text(`${due < 0 ? "-" : ""}${displayDue}`, 195, currentY + 6, { align: "right" });
+          
+          lastDue = due;
           currentY += 15;
 
           if (currentY > 260) {
@@ -278,11 +302,14 @@ function Payments() {
       }
 
       // ── Final Total Highlighting ────────────────────────────────
+      const finalDue = Number(item.dueAmount || 0);
+      const finalLabel = finalDue < 0 ? "ADVANCE" : "DUE";
+
       doc.setFillColor(30, 58, 138);
-      doc.roundedRect(130, currentY, 70, 15, 1, 1, "F");
+      doc.roundedRect(120, currentY, 70, 15, 1, 1, "F");
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(14);
-      doc.text(`DUE: Rs. ${Number(item.dueAmount || 0).toFixed(2)}`, 165, currentY + 9.5, { align: "center" });
+      doc.text(`${finalLabel}: Rs. ${Math.abs(finalDue).toFixed(2)}`, 165, currentY + 9.5, { align: "center" });
 
       // ── Footer ──────────────────────────────────────────────────
       doc.setFont("helvetica", "italic");
