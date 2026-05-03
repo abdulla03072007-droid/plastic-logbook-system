@@ -15,11 +15,11 @@ const safeParseAdmin = () => {
 };
 
 const STAT_CARDS = [
-  { key: "totalProducts",       label: "Total Products",    icon: "📦", color: "indigo"  },
-  { key: "totalCustomers",      label: "Total Customers",   icon: "👥", color: "emerald" },
-  { key: "todaysSales",         label: "Today's Sales",     icon: "💰", color: "violet"  },
-  { key: "creditPending",       label: "Pending Dues",      icon: "⏳", color: "amber"   },
-  { key: "totalPurchaseSpent",  label: "Purchase Expense",  icon: "🛒", color: "rose"    },
+  { key: "totalProducts", label: "Total Products", icon: "📦", color: "indigo" },
+  { key: "totalCustomers", label: "Total Customers", icon: "👥", color: "emerald" },
+  { key: "todaysSales", label: "Today's Sales", icon: "💰", color: "violet" },
+  { key: "creditPending", label: "Pending Dues", icon: "⏳", color: "amber" },
+  { key: "totalPurchaseSpent", label: "Purchase Expense", icon: "🛒", color: "rose" },
 ];
 
 function Dashboard() {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import Toast from "../components/Toast";
 import useToast from "../components/useToast";
@@ -17,12 +18,16 @@ const getEmptyForm = () => ({
 });
 
 function Payments() {
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const initialSearch = queryParams.get("search") || "";
+
   const [customers, setCustomers] = useState([]);
   const [payments,  setPayments]  = useState([]);
   const [formData,  setFormData]  = useState(getEmptyForm());
   const [editingId, setEditingId] = useState(null);
   const [deleteId,  setDeleteId]  = useState(null);
-  const [search,    setSearch]    = useState("");
+  const [search,    setSearch]    = useState(initialSearch);
   const { toasts, addToast, removeToast } = useToast();
 
   const fetchCustomers = async () => {
