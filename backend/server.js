@@ -52,18 +52,22 @@ app.get("*", (req, res) => {
 
 const PORT = process.env.PORT || 10000;
 
+// Start Server Immediately (Important for Render)
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`🚀 Server is live on port ${PORT}`);
+});
+
+// Connect to MongoDB in background
+if (!process.env.MONGO_URI) {
+  console.error("⚠️ WARNING: MONGO_URI is missing in Environment Variables!");
+}
+
 mongoose.connect(process.env.MONGO_URI || "", {
   serverSelectionTimeoutMS: 30000
 })
 .then(() => {
   console.log("✅ MongoDB Connected Successfully");
-
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`🚀 Server is live on port ${PORT}`);
-  });
 })
 .catch((err) => {
   console.error("❌ MongoDB Connection Error:", err.message);
-  // Fail gracefully so the process doesn't just hang
-  process.exit(1);
 });

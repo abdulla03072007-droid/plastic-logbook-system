@@ -154,7 +154,7 @@ function Reports() {
                             style={{ padding: "4px 8px", fontSize: 11, textDecoration: "none" }}
                             title="Go to Payments"
                           >
-                            💸 Pay Now
+                            💳 Pay Now
                           </a>
                           <button 
                             className="btn btn-secondary btn-sm"
@@ -162,7 +162,7 @@ function Reports() {
                             onClick={() => window.open(`https://wa.me/?text=Hello ${item.customerName}, your pending balance is ₹${item.dueAmount}. Please clear it soon.`)}
                             title="Send WhatsApp Reminder"
                           >
-                            💬
+                            💬 Remind
                           </button>
                         </div>
                       </td>
