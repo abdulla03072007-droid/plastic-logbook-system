@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
+import PageHeader from "../components/PageHeader";
 import Toast from "../components/Toast";
 import useToast from "../components/useToast";
 import { productAPI } from "../services/api";
-import "../styles/Common.css";
 
 const EMPTY_FORM = {
-  productName:    "",
-  productType:    "",
-  size:           "",
-  quantity:       "",
-  price:          "",
+  productName: "",
+  productType: "",
+  size: "",
+  quantity: "",
+  price: "",
   stockAvailable: "",
 };
 
@@ -91,14 +91,20 @@ function Products() {
   const filtered = products; // Filtering is handled by backend search param in fetchProducts
 
   return (
-    <div className="layout">
+    <div className="layout" style={{ display: "flex", minHeight: "100vh" }}>
       <Sidebar />
       <Toast toasts={toasts} removeToast={removeToast} />
 
-      <div className="main-content">
-        <div className="page-header">
-          <h1>📦 Products</h1>
-          <p>Manage your plastic product inventory</p>
+      <div className="main-content" style={{ padding: '30px', background: '#f1f5f9', minHeight: '100vh', fontFamily: "'Inter', sans-serif", flex: 1 }}>
+        <div className="container-fluid">
+          {/* ── MODERN HEADER ────────────────────────────────────── */}
+          <PageHeader 
+            title="Products" 
+            icon="📦" 
+            search={search} 
+            setSearch={setSearch} 
+            placeholder="Search by name or type..."
+          />
         </div>
 
         <div className="page-body">

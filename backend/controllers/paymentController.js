@@ -1,62 +1,52 @@
 const Payment = require("../models/Payment");
 const Customer = require("../models/Customer");
 
-// CREATE PAYMENT
+// CREATE TRANSACTION (Bank Style Ledger)
 exports.createPayment = async (req, res) => {
   try {
     const { customerId, customerName, shopName, totalBill, paidAmount, paymentDate } = req.body;
 
-    // Validate input
-    if (!customerId || !customerName || !shopName || !totalBill) {
-      return res.status(400).json({
-        success: false,
-        message: "All required fields must be provided"
-      });
+    if (!customerId || !customerName) {
+      return res.status(400).json({ success: false, message: "Missing info." });
     }
 
-    // Calculate due and status
+    // BANK LOGIC: Fetch current balance from the master customer record
+    const customer = await Customer.findOne({ _id: customerId, adminId: req.admin.id });
+    if (!customer) return res.status(404).json({ success: false, message: "Customer not found." });
+
+    const prevBalance = customer.totalDue || 0;
+    const bill = Number(totalBill) || 0;
     const paid = Number(paidAmount) || 0;
-    const total = Number(totalBill);
-    const dueAmount = total - paid;
+    
+    // Calculate new running balance: (Old Balance + New Bill - New Payment)
+    const newRunningBalance = prevBalance + bill - paid;
 
-    let paymentStatus = "Pending";
-    if (paid > 0 && paid < total) paymentStatus = "Partial";
-    if (paid >= total) paymentStatus = "Paid";
-
-    const newPayment = new Payment({
+    const newTransaction = new Payment({
       adminId: req.admin.id,
-      customerId,
-      customerName,
-      shopName,
-      totalBill: total,
+      customerId, customerName, shopName,
+      totalBill: bill,
       paidAmount: paid,
-      dueAmount,
+      dueAmount: newRunningBalance, // This is now the "Balance After Transaction"
       paymentDate: paymentDate || new Date().toISOString().split("T")[0],
-      paymentStatus
+      paymentStatus: paid >= (bill + prevBalance) && (bill + prevBalance) > 0 ? "Paid" : (paid > 0 ? "Partial" : "Pending")
     });
 
-    await newPayment.save();
+    await newTransaction.save();
 
-    // SYNC CUSTOMER TOTAL DUE WITH LATEST PAYMENT
-    const lastPayment = await Payment.findOne({ customerId, adminId: req.admin.id })
-      .sort({ createdAt: -1 });
+    // ROBUST BALANCE RE-CALCULATION (Sum of everything)
+    const allTxns = await Payment.find({ customerId, adminId: req.admin.id });
+    const totalBills = allTxns.reduce((sum, t) => sum + (t.totalBill || 0), 0);
+    const totalPaid = allTxns.reduce((sum, t) => sum + (t.paidAmount || 0), 0);
+    const absoluteBalance = totalBills - totalPaid;
 
     await Customer.findOneAndUpdate(
       { _id: customerId, adminId: req.admin.id },
-      { totalDue: lastPayment ? lastPayment.dueAmount : 0 }
+      { totalDue: absoluteBalance }
     );
 
-    return res.status(201).json({
-      success: true,
-      message: "Payment created successfully",
-      payment: newPayment
-    });
+    return res.status(201).json({ success: true, message: "Transaction Logged!", payment: newTransaction });
   } catch (error) {
-    console.log(error);
-    return res.status(500).json({
-      success: false,
-      message: "Server error"
-    });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -64,64 +54,18 @@ exports.createPayment = async (req, res) => {
 exports.getAllPayments = async (req, res) => {
   try {
     const { search, status } = req.query;
-
     let query = { adminId: req.admin.id };
-
     if (search) {
-      query.$and = [
-        { adminId: req.admin.id },
-        {
-          $or: [
-            { customerName: { $regex: search, $options: "i" } },
-            { shopName: { $regex: search, $options: "i" } }
-          ]
-        }
+      query.$or = [
+        { customerName: { $regex: search, $options: "i" } },
+        { shopName: { $regex: search, $options: "i" } }
       ];
     }
-
-    if (status) {
-      query.paymentStatus = status;
-    }
-
+    if (status) query.paymentStatus = status;
     const payments = await Payment.find(query).sort({ createdAt: -1 });
-
-    return res.status(200).json({
-      success: true,
-      payments
-    });
+    return res.status(200).json({ success: true, payments });
   } catch (error) {
-    console.log(error);
-    return res.status(500).json({
-      success: false,
-      message: "Server error"
-    });
-  }
-};
-
-// GET SINGLE PAYMENT
-exports.getPaymentById = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const payment = await Payment.findOne({ _id: id, adminId: req.admin.id });
-
-    if (!payment) {
-      return res.status(404).json({
-        success: false,
-        message: "Payment not found"
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      payment
-    });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({
-      success: false,
-      message: "Server error"
-    });
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
@@ -129,100 +73,51 @@ exports.getPaymentById = async (req, res) => {
 exports.updatePayment = async (req, res) => {
   try {
     const { id } = req.params;
-    const { totalBill, paidAmount, paymentDate, paymentStatus } = req.body;
+    const { totalBill, paidAmount, paymentDate } = req.body;
 
     let payment = await Payment.findOne({ _id: id, adminId: req.admin.id });
+    if (!payment) return res.status(404).json({ success: false, message: "Not found" });
 
-    if (!payment) {
-      return res.status(404).json({
-        success: false,
-        message: "Payment not found"
-      });
-    }
-
-    // Update fields
     if (totalBill !== undefined) payment.totalBill = Number(totalBill);
-    if (paidAmount !== undefined) {
-      payment.paidAmount = Number(paidAmount);
-      payment.dueAmount = Math.max(0, (payment.totalBill || totalBill) - Number(paidAmount));
-
-      // Auto-calculate status
-      if (payment.paidAmount >= payment.totalBill) {
-        payment.paymentStatus = "Paid";
-      } else if (payment.paidAmount > 0) {
-        payment.paymentStatus = "Partial";
-      } else {
-        payment.paymentStatus = "Pending";
-      }
-    }
-
+    if (paidAmount !== undefined) payment.paidAmount = Number(paidAmount);
     if (paymentDate) payment.paymentDate = paymentDate;
-    if (paymentStatus) payment.paymentStatus = paymentStatus;
+
+    payment.dueAmount = payment.totalBill - payment.paidAmount;
+
+    if (payment.paidAmount >= payment.totalBill && payment.totalBill > 0) payment.paymentStatus = "Paid";
+    else if (payment.paidAmount > 0) payment.paymentStatus = "Partial";
+    else payment.paymentStatus = "Pending";
 
     await payment.save();
 
-    // SYNC CUSTOMER TOTAL DUE WITH LATEST PAYMENT
-    const lastPayment = await Payment.findOne({ customerId: payment.customerId, adminId: req.admin.id })
-      .sort({ createdAt: -1 });
+    // ROBUST RE-CALCULATION
+    const allTxns = await Payment.find({ customerId: payment.customerId, adminId: req.admin.id });
+    const absoluteBalance = allTxns.reduce((sum, t) => sum + (t.totalBill || 0), 0) - allTxns.reduce((sum, t) => sum + (t.paidAmount || 0), 0);
+    await Customer.findOneAndUpdate({ _id: payment.customerId, adminId: req.admin.id }, { totalDue: absoluteBalance });
 
-    await Customer.findOneAndUpdate(
-      { _id: payment.customerId, adminId: req.admin.id },
-      { totalDue: lastPayment ? lastPayment.dueAmount : 0 }
-    );
-
-    return res.status(200).json({
-      success: true,
-      message: "Payment updated successfully",
-      payment
-    });
+    return res.status(200).json({ success: true, message: "Updated!", payment });
   } catch (error) {
-    console.log(error);
-    return res.status(500).json({
-      success: false,
-      message: "Server error"
-    });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// DELETE PAYMENT
+// DELETE TRANSACTION
 exports.deletePayment = async (req, res) => {
   try {
     const { id } = req.params;
+    const payment = await Payment.findOne({ _id: id, adminId: req.admin.id });
+    if (!payment) return res.status(404).json({ success: false, message: "Not found" });
 
-    const payment = await Payment.findOneAndDelete({ _id: id, adminId: req.admin.id });
+    const custId = payment.customerId;
+    await Payment.findByIdAndDelete(id);
 
-    if (!payment) {
-      return res.status(404).json({
-        success: false,
-        message: "Payment not found"
-      });
-    }
+    // ROBUST RE-CALCULATION
+    const allTxns = await Payment.find({ customerId: custId, adminId: req.admin.id });
+    const absoluteBalance = allTxns.reduce((sum, t) => sum + (t.totalBill || 0), 0) - allTxns.reduce((sum, t) => sum + (t.paidAmount || 0), 0);
+    await Customer.findOneAndUpdate({ _id: custId, adminId: req.admin.id }, { totalDue: absoluteBalance });
 
-    // UPDATE CUSTOMER TOTAL DUE (Optional: reset to a previous state? 
-    // Usually, we just want to ensure the customer record reflects reality.
-    // If we delete the latest payment, we might want to revert the totalDue.
-    // But we don't have history easily. Let's at least try to sync if possible.)
-    const customer = await Customer.findOne({ _id: payment.customerId, adminId: req.admin.id });
-    if (customer) {
-      // Subtract the due that was added by this payment
-      // Wait, our logic is customer.totalDue = payment.dueAmount.
-      // If we delete it, we should probably find the previous payment's due.
-      const lastPayment = await Payment.findOne({ customerId: payment.customerId, adminId: req.admin.id })
-        .sort({ createdAt: -1 });
-
-      customer.totalDue = lastPayment ? lastPayment.dueAmount : 0;
-      await customer.save();
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: "Payment deleted successfully"
-    });
+    return res.status(200).json({ success: true, message: "Deleted!" });
   } catch (error) {
-    console.log(error);
-    return res.status(500).json({
-      success: false,
-      message: "Server error"
-    });
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 };

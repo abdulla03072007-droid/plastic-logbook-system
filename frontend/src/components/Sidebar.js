@@ -4,11 +4,11 @@ import "../styles/Common.css";
 
 const NAV_ITEMS = [
   { to: "/dashboard", icon: "📊", label: "Dashboard" },
-  { to: "/products",  icon: "📦", label: "Products"  },
+  { to: "/products", icon: "📦", label: "Products" },
   { to: "/customers", icon: "👥", label: "Customers" },
-  { to: "/payments",  icon: "💳", label: "Payments"  },
+  { to: "/payments", icon: "💳", label: "Payments" },
   { to: "/purchases", icon: "🛒", label: "Purchases" },
-  { to: "/reports",   icon: "📈", label: "Reports"   },
+  { to: "/reports", icon: "📈", label: "Reports" },
 ];
 
 // Safe parse — guards against null or the string "undefined"
@@ -23,9 +23,9 @@ const safeParseAdmin = () => {
 };
 
 const Sidebar = () => {
-  const navigate  = useNavigate();
-  const location  = useLocation();
-  const admin     = safeParseAdmin();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const admin = safeParseAdmin();
 
   // Get initials for avatar
   const initials = (admin.username || "A")
@@ -42,8 +42,19 @@ const Sidebar = () => {
     <>
       {/* ── Mobile Top Header ────────────────────────── */}
       <div className="mobile-header">
-        <div className="mobile-brand">
-          <span>🏪</span> Plastic Logbook
+        <div className="mobile-brand" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ 
+            background: 'white', 
+            padding: '4px', 
+            borderRadius: '8px', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+          }}>
+            <img src="/logo_premium.png?v=3" alt="Logo" style={{ width: '30px', height: '30px' }} />
+          </div>
+          Smart Logbook
         </div>
         <button className="mobile-logout" onClick={handleLogout}>
           🚪 Logout
@@ -54,10 +65,20 @@ const Sidebar = () => {
       <div className="sidebar">
         <div className="sidebar-brand">
           <div className="sidebar-brand-inner">
-            <div className="sidebar-brand-icon">🏪</div>
+            <div className="sidebar-brand-icon" style={{ 
+              background: 'white', 
+              padding: '6px', 
+              borderRadius: '12px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
+            }}>
+              <img src="/logo_premium.png?v=3" alt="Logo" style={{ width: '40px', height: '40px' }} />
+            </div>
             <div className="sidebar-brand-text">
-              <h2>Plastic Logbook</h2>
-              <span>Business Management</span>
+              <h2 style={{ fontSize: '1.2rem', fontWeight: 800 }}>Smart Logbook</h2>
+              <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>Business Management</span>
             </div>
           </div>
         </div>
@@ -83,7 +104,7 @@ const Sidebar = () => {
             <Link
               to="/system-admin"
               className={`nav-link${location.pathname === "/system-admin" ? " active" : ""}`}
-              style={{ marginTop: "auto", borderTop: "1px solid var(--border)", paddingTop: "1rem" }}
+              style={{ marginTop: "auto", borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "1rem" }}
             >
               <span className="nav-icon">⚙️</span>
               <span className="nav-label">System Admin</span>
@@ -105,7 +126,8 @@ const Sidebar = () => {
             className="logout-btn"
             onClick={handleLogout}
           >
-            🚪 <span className="nav-label">Logout</span>
+            <span className="nav-icon">🚪</span>
+            <span className="nav-label">Logout</span>
           </button>
         </div>
       </div>

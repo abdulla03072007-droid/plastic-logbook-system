@@ -122,7 +122,7 @@ function Login() {
           <p className="login-footer" style={{ marginTop: "20px" }}>
             Don't have an account? <Link to="/register" style={{ color: "var(--primary)", fontWeight: "600" }}>Register</Link>
           </p>
-          <p className="login-footer" style={{ marginTop: "10px" }}>Plastic Logbook System © 2025</p>
+          <p className="login-footer" style={{ marginTop: "10px" }}>Smart Logbook System © 2025</p>
         </div>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
+import PageHeader from "../components/PageHeader";
 import { paymentAPI } from "../services/api";
 import "../styles/Common.css";
 
@@ -48,149 +49,90 @@ function Reports() {
   ];
 
   return (
-    <div className="layout">
+    <div className="layout" style={{ display: "flex", minHeight: "100vh" }}>
       <Sidebar />
 
-      <div className="main-content">
-        <div className="page-header">
-          <h1>📈 Reports</h1>
-          <p>Business analytics and payment overview</p>
-        </div>
+      <div className="main-content" style={{ padding: '30px', background: '#f1f5f9', minHeight: '100vh', fontFamily: "'Inter', sans-serif", flex: 1 }}>
+        <div className="container-fluid">
+          {/* ── UNIFIED MODERN HEADER ──────────────────────────── */}
+          <PageHeader 
+            title="Business Reports" 
+            icon="📈" 
+          />
 
-        {/* ── KPI Cards ──────────────────────────────── */}
-        <div className="stat-grid" style={{ marginBottom: 28 }}>
-          {KPI_CARDS.map((card) => (
-            <div key={card.label} className="stat-card">
-              <div className={`stat-icon ${card.color}`}>{card.icon}</div>
-              <div className="stat-body">
-                <div className="stat-value">
-                  {loading ? "—" : card.value}
-                </div>
-                <div className="stat-label">{card.label}</div>
-                <div
-                  style={{
-                    fontSize: 11,
-                    color: "var(--text-light)",
-                    marginTop: 2,
-                    fontWeight: 500,
-                  }}
-                >
-                  {card.sub}
+          {/* ── KPI Cards ──────────────────────────────── */}
+          <div className="stat-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '25px', marginBottom: 30 }}>
+            {KPI_CARDS.map((card) => (
+              <div key={card.label} className="stat-card" style={{ background: 'white', padding: '25px', borderRadius: '20px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: 20 }}>
+                <div className={`stat-icon ${card.color}`} style={{ fontSize: '2rem', background: '#f1f5f9', padding: '15px', borderRadius: '15px' }}>{card.icon}</div>
+                <div className="stat-body">
+                  <div className="stat-value" style={{ fontSize: '1.5rem', fontWeight: 900, color: '#1e293b' }}>
+                    {loading ? "—" : card.value}
+                  </div>
+                  <div className="stat-label" style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 600 }}>{card.label}</div>
+                  <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2, fontWeight: 500 }}>
+                    {card.sub}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-
-        {/* ── Pending Dues Table ──────────────────────── */}
-        <div className="list-card">
-          <div className="list-card-header">
-            <h3>⚠️ Pending Dues ({pendingPayments.length})</h3>
+            ))}
           </div>
 
-          {pendingPayments.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-icon">🎉</div>
-              <p>No pending dues — all payments are cleared!</p>
+          {/* ── Pending Dues Table ──────────────────────── */}
+          <div className="list-card" style={{ background: 'white', padding: '25px', borderRadius: '20px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', marginBottom: 30 }}>
+            <div className="list-card-header" style={{ marginBottom: 20 }}>
+              <h3 style={{ margin: 0, color: '#dc2626' }}>⚠️ Pending Dues ({pendingPayments.length})</h3>
             </div>
-          ) : (
-            <div style={{ overflowX: "auto" }}>
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Customer</th>
-                    <th>Shop</th>
-                    <th>Total Bill</th>
-                    <th>Paid</th>
-                    <th>Due Amount</th>
-                    <th>Date</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pendingPayments.map((item, i) => (
-                    <tr
-                      key={item._id}
-                      style={{
-                        background:
-                          Number(item.dueAmount) > 1000
-                            ? "rgba(239,68,68,0.06)"
-                            : "transparent",
-                      }}
-                    >
-                      <td style={{ color: "var(--text-light)", fontWeight: 500 }}>
-                        {i + 1}
-                      </td>
-                      <td style={{ fontWeight: 600 }}>{item.customerName}</td>
-                      <td>{item.shopName}</td>
-                      <td>₹{item.totalBill}</td>
-                      <td style={{ color: "var(--success)", fontWeight: 600 }}>
-                        ₹{item.paidAmount}
-                      </td>
-                      <td>
-                        <span
-                          style={{
-                            fontWeight: 700,
-                            color: "var(--error)",
-                            fontSize: 14,
-                          }}
-                        >
-                          ₹{item.dueAmount}
-                        </span>
-                      </td>
-                      <td style={{ whiteSpace: "nowrap" }}>{item.paymentDate}</td>
-                      <td>
-                        <span className={`badge ${item.paymentStatus === "Pending" ? "badge-warning" : "badge-info"}`}>
-                          {item.paymentStatus === "Pending" ? "⏳ Pending" : "🌓 Partial"}
-                        </span>
-                      </td>
-                      <td>
-                        <div style={{ display: "flex", gap: "10px" }}>
-                          <a 
-                            href={`/payments?search=${item.customerName}`}
-                            className="btn btn-primary btn-sm"
-                            style={{ padding: "4px 8px", fontSize: 11, textDecoration: "none" }}
-                            title="Go to Payments"
-                          >
-                            💳 Pay Now
-                          </a>
-                          <button 
-                            className="btn btn-secondary btn-sm"
-                            style={{ padding: "4px 8px", fontSize: 11 }}
-                            onClick={() => window.open(`https://wa.me/?text=Hello ${item.customerName}, your pending balance is ₹${item.dueAmount}. Please clear it soon.`)}
-                            title="Send WhatsApp Reminder"
-                          >
-                            💬 Remind
-                          </button>
-                        </div>
-                      </td>
+
+            {pendingPayments.length === 0 ? (
+              <div className="empty-state" style={{ textAlign: 'center', padding: '40px' }}>
+                <div style={{ fontSize: '3rem' }}>🎉</div>
+                <p style={{ color: '#64748b', fontWeight: 600 }}>No pending dues — all payments are cleared!</p>
+              </div>
+            ) : (
+              <div style={{ overflowX: "auto" }}>
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Customer</th>
+                      <th>Shop</th>
+                      <th>Total Bill</th>
+                      <th>Paid</th>
+                      <th>Due Amount</th>
+                      <th>Date</th>
+                      <th>Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-
-        {/* ── All Transactions ────────────────────────── */}
-        <div className="list-card" style={{ marginTop: 24 }}>
-          <div className="list-card-header">
-            <h3>📋 All Transactions ({payments.length})</h3>
+                  </thead>
+                  <tbody>
+                    {pendingPayments.map((item) => (
+                      <tr key={item._id}>
+                        <td style={{ fontWeight: 700 }}>{item.customerName}</td>
+                        <td>{item.shopName}</td>
+                        <td>₹{item.totalBill}</td>
+                        <td style={{ color: "#059669", fontWeight: 600 }}>₹{item.paidAmount}</td>
+                        <td style={{ color: "#dc2626", fontWeight: 800, fontSize: 15 }}>₹{item.dueAmount}</td>
+                        <td>{item.paymentDate}</td>
+                        <td>
+                          <div style={{ display: "flex", gap: "10px" }}>
+                            <a href={`/payments?search=${item.customerName}`} className="btn btn-primary btn-sm" style={{ textDecoration: 'none' }}>💳 Pay Now</a>
+                            <button className="btn btn-secondary btn-sm" onClick={() => window.open(`https://wa.me/?text=Reminder: Pending balance ₹${item.dueAmount}`)}>💬 Remind</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
 
-          {payments.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-icon">📋</div>
-              <p>No transactions recorded yet</p>
-            </div>
-          ) : (
+          {/* ── All Transactions ────────────────────────── */}
+          <div className="list-card" style={{ background: 'white', padding: '25px', borderRadius: '20px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)' }}>
+            <h3 style={{ marginBottom: 20, color: '#1e293b' }}>📋 All Transactions ({payments.length})</h3>
             <div style={{ overflowX: "auto" }}>
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>#</th>
                     <th>Customer</th>
                     <th>Shop</th>
                     <th>Total</th>
@@ -201,44 +143,25 @@ function Reports() {
                   </tr>
                 </thead>
                 <tbody>
-                  {payments.map((item, i) => (
+                  {payments.map((item) => (
                     <tr key={item._id}>
-                      <td style={{ color: "var(--text-light)", fontWeight: 500 }}>
-                        {i + 1}
-                      </td>
-                      <td style={{ fontWeight: 600 }}>{item.customerName}</td>
+                      <td style={{ fontWeight: 700 }}>{item.customerName}</td>
                       <td>{item.shopName}</td>
                       <td>₹{item.totalBill}</td>
-                      <td style={{ color: "var(--success)", fontWeight: 600 }}>
-                        ₹{item.paidAmount}
-                      </td>
-                      <td
-                        style={{
-                          color:
-                            Number(item.dueAmount) > 0
-                              ? "var(--error)"
-                              : "var(--text-light)",
-                          fontWeight: Number(item.dueAmount) > 0 ? 700 : 400,
-                        }}
-                      >
-                        ₹{item.dueAmount}
-                      </td>
+                      <td style={{ color: "#059669", fontWeight: 600 }}>₹{item.paidAmount}</td>
+                      <td style={{ color: item.dueAmount > 0 ? "#dc2626" : "#64748b", fontWeight: 700 }}>₹{item.dueAmount}</td>
                       <td>
-                        {item.paymentStatus === "Paid" ? (
-                          <span className="badge badge-success">✓ Paid</span>
-                        ) : (
-                          <span className={`badge ${item.paymentStatus === "Pending" ? "badge-warning" : "badge-info"}`}>
-                            {item.paymentStatus === "Pending" ? "⏳ Pending" : "🌓 Partial"}
-                          </span>
-                        )}
+                        <span className={`badge ${item.paymentStatus === "Paid" ? "badge-success" : "badge-warning"}`}>
+                          {item.paymentStatus}
+                        </span>
                       </td>
-                      <td style={{ whiteSpace: "nowrap" }}>{item.paymentDate}</td>
+                      <td>{item.paymentDate}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>
