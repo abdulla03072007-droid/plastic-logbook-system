@@ -52,12 +52,21 @@ function Login() {
       {/* ── Left: Branding ─────────────────────────────── */}
       <div className="login-branding">
         <div className="login-brand-content">
-          <span className="login-logo">🏪</span>
-          <h1 className="login-brand-title">Plastic&nbsp;Logbook</h1>
+          <div className="login-logo-container" style={{ 
+            background: 'white', 
+            padding: '12px', 
+            borderRadius: '20px', 
+            display: 'inline-flex', 
+            marginBottom: '20px',
+            boxShadow: '0 10px 25px rgba(0,0,0,0.1)'
+          }}>
+            <img src="/logo_premium.png?v=3" alt="Smart Logbook" style={{ width: '60px', height: '60px' }} />
+          </div>
+          <h1 className="login-brand-title">Smart&nbsp;Logbook</h1>
           <p className="login-brand-desc">
-            A professional business management system built for
-            plastic product suppliers — manage inventory, customers,
-            and payments all in one place.
+            An elite business management ecosystem designed for
+            modern suppliers — orchestrate your inventory, customers,
+            and financial collections with surgical precision.
           </p>
           <div className="login-features">
             <div className="login-feature">✓ Product Inventory Management</div>
