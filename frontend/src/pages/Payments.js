@@ -163,69 +163,55 @@ const Payments = () => {
     <div className="payments-page" style={{ display: "flex", minHeight: "100vh" }}>
       <style>{`
         @media (max-width: 768px) {
-          .main-content { padding: 12px !important; background: #f8fafc !important; }
+          .main-content { padding: 10px !important; background: #f1f5f9 !important; }
           .container-fluid { padding: 0 !important; }
           
-          /* Hide standard table headers on mobile except the essentials */
-          .list-card-header h3 { font-size: 16px !important; }
-          
-          /* Force Table into a clean mobile layout */
-          table, thead, tbody, th, td, tr { display: block; }
-          
-          /* Re-style header row as a 3-column grid */
-          thead tr { 
+          /* SECTION: CUSTOMER COLLECTIONS (3-Column Grid) */
+          .collections-table thead tr { 
             display: grid !important; 
-            grid-template-columns: 1.5fr 1fr 1fr;
-            background: #f1f5f9;
-            border-radius: 12px 12px 0 0;
+            grid-template-columns: 1.5fr 1fr 1fr !important;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
           }
-          thead th { 
-            padding: 10px !important; 
-            font-size: 10px !important; 
-            text-align: center !important;
-          }
-          thead th:first-child { text-align: left !important; padding-left: 15px !important; }
-
-          /* Style each row as a 3-column grid */
-          tbody tr { 
+          .collections-table tbody tr { 
             display: grid !important; 
-            grid-template-columns: 1.5fr 1fr 1fr;
-            padding: 12px 0 !important;
+            grid-template-columns: 1.5fr 1fr 1fr !important;
             align-items: center;
+            padding: 10px 0 !important;
+            background: white !important;
             border-bottom: 1px solid #f1f5f9;
           }
+          .mobile-hide { display: none !important; }
 
-          td { 
-            padding: 0 8px !important; 
-            border: none !important; 
-            text-align: center;
+          /* SECTION: CARD-BASED LAYOUT FOR PENDING & HISTORY */
+          .mobile-card-list { display: block !important; }
+          .desktop-table-view { display: none !important; }
+
+          .payment-card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            border: 1px solid #f1f5f9;
           }
-          td:first-child { text-align: left !important; padding-left: 15px !important; }
+          .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+          .card-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; }
+          .card-label { color: #94a3b8; font-weight: 500; }
+          .card-value { color: #1e293b; font-weight: 700; }
+          .card-footer { margin-top: 15px; pt: 15px; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
 
-          /* Stack Name & Shop */
-          .customer-info-cell { display: flex; flex-direction: column; }
-          .customer-name-bold { font-weight: 800; font-size: 14px; color: #0f172a; }
-          .shop-name-small { font-size: 11px; color: #94a3b8; margin-top: 2px; }
-
-          /* Style Inputs like the screenshot */
+          /* Input Fixes */
           .mobile-input {
             width: 100% !important;
-            height: 42px !important;
-            border-radius: 12px !important;
+            height: 40px !important;
+            border-radius: 10px !important;
             font-size: 14px !important;
             text-align: center !important;
-            border: 1px solid #e2e8f0 !important;
           }
-          .bill-input-mobile { background: #ffffff !important; }
-          .pay-input-mobile { 
-            background: #f0fdf4 !important; 
-            border: 1px solid #10b981 !important; 
-            color: #047857 !important;
-            font-weight: 700 !important;
-          }
-
-          /* Hide actions/date on main mobile list to match screenshot */
-          .mobile-hide { display: none !important; }
+        }
+        @media (min-width: 769px) {
+          .mobile-card-list { display: none !important; }
         }
       `}</style>
       <Sidebar />
@@ -333,14 +319,14 @@ const Payments = () => {
               <h3 style={{ margin: 0, color: '#0f172a', fontWeight: 800, fontSize: '1.1rem' }}>🛒 Customer Collections</h3>
             </div>
             <div style={{ maxHeight: '450px', overflowY: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0 }}>
+              <table className="collections-table" style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0 }}>
                 <thead style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 5 }}>
                   <tr>
                     <th style={{ padding: '15px 25px', fontSize: 12, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>CUSTOMER / SHOP</th>
                     <th style={{ padding: '15px', fontSize: 12, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>BILL (₹)</th>
                     <th style={{ padding: '15px', fontSize: 12, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>PAYMENT (₹)</th>
-                    <th style={{ padding: '15px', fontSize: 12, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>DATE</th>
-                    <th style={{ padding: '15px 25px', fontSize: 12, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>ACTION</th>
+                    <th className="mobile-hide" style={{ padding: '15px', fontSize: 12, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>DATE</th>
+                    <th className="mobile-hide" style={{ padding: '15px 25px', fontSize: 12, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>ACTION</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -445,7 +431,7 @@ const Payments = () => {
                   Pending Dues ({filteredPayments.filter(p => p.dueAmount > 0).length})
                 </h3>
               </div>
-              <div style={{ padding: '0', overflowX: 'auto' }}>
+              <div className="desktop-table-view" style={{ padding: '0', overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                   <thead style={{ background: '#fef2f2', borderBottom: '1px solid #fee2e2' }}>
                     <tr>
@@ -508,6 +494,43 @@ const Payments = () => {
                   </tbody>
                 </table>
               </div>
+
+              {/* MOBILE CARD VIEW: PENDING DUES */}
+              <div className="mobile-card-list" style={{ padding: '15px' }}>
+                {filteredPayments.filter(p => p.dueAmount > 0).map((p) => (
+                  <div key={p._id} className="payment-card">
+                    <div className="card-header">
+                      <div>
+                        <div className="customer-name-bold">{p.customerName}</div>
+                        <div className="shop-name-small">{p.shopName}</div>
+                      </div>
+                      <span style={{ background: '#fef3c7', color: '#92400e', padding: '4px 10px', borderRadius: '8px', fontSize: 10, fontWeight: 800 }}>PENDING</span>
+                    </div>
+                    <div className="card-row">
+                      <span className="card-label">Bill Amount:</span>
+                      <span className="card-value">₹{p.totalBill}</span>
+                    </div>
+                    <div className="card-row">
+                      <span className="card-label">Paid:</span>
+                      <span className="card-value" style={{ color: '#059669' }}>₹{p.paidAmount}</span>
+                    </div>
+                    <div className="card-row">
+                      <span className="card-label">Outstanding Due:</span>
+                      <span className="card-value" style={{ color: '#dc2626', fontSize: '1.1rem' }}>₹{p.dueAmount}</span>
+                    </div>
+                    <div className="card-row">
+                      <span className="card-label">Date:</span>
+                      <span className="card-value">{p.paymentDate}</span>
+                    </div>
+                    <button 
+                      onClick={() => handleEdit(p)}
+                      style={{ width: '100%', marginTop: '10px', background: '#4f46e5', color: 'white', border: 'none', padding: '12px', borderRadius: '12px', fontWeight: 800 }}
+                    >
+                      💳 Pay Now
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
@@ -527,7 +550,7 @@ const Payments = () => {
             }}>
               <h3 style={{ margin: 0, color: '#0f172a', fontWeight: 800, fontSize: '1.1rem' }}>📜 Recent History (Digital Passbook)</h3>
             </div>
-            <div style={{ maxHeight: '600px', overflowY: 'auto' }}>
+            <div className="desktop-table-view" style={{ maxHeight: '600px', overflowY: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0 }}>
                 <thead style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 10 }}>
                   <tr>
@@ -575,6 +598,47 @@ const Payments = () => {
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            {/* MOBILE CARD VIEW: HISTORY */}
+            <div className="mobile-card-list" style={{ padding: '15px' }}>
+              {filteredPayments.map((p) => (
+                <div key={p._id} className="payment-card">
+                  <div className="card-header">
+                    <div>
+                      <div className="customer-name-bold">{p.customerName}</div>
+                      <div className="shop-name-small">{p.paymentDate}</div>
+                    </div>
+                    <span style={{ 
+                      background: p.paymentStatus === 'Paid' ? '#d1fae5' : '#fee2e2', 
+                      color: p.paymentStatus === 'Paid' ? '#065f46' : '#991b1b', 
+                      padding: '4px 10px', 
+                      borderRadius: '8px', 
+                      fontSize: 10, 
+                      fontWeight: 800 
+                    }}>{p.paymentStatus.toUpperCase()}</span>
+                  </div>
+                  <div className="card-row">
+                    <span className="card-label">Total Bill:</span>
+                    <span className="card-value">₹{p.totalBill}</span>
+                  </div>
+                  <div className="card-row">
+                    <span className="card-label">Paid (Credit):</span>
+                    <span className="card-value" style={{ color: '#059669' }}>₹{p.paidAmount}</span>
+                  </div>
+                  <div className="card-row">
+                    <span className="card-label">Remaining Balance:</span>
+                    <span className="card-value" style={{ color: '#1e40af' }}>₹{p.dueAmount}</span>
+                  </div>
+                  <div className="card-footer">
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <button onClick={() => handleEdit(p)} style={{ background: '#f1f5f9', border: 'none', padding: '10px', borderRadius: '8px' }}>✏️</button>
+                      <button onClick={() => generatePDF(p)} style={{ background: '#eff6ff', border: 'none', padding: '10px', borderRadius: '8px' }}>📄</button>
+                      <button onClick={() => setDeleteId(p._id)} style={{ background: '#fff1f2', border: 'none', padding: '10px', borderRadius: '8px' }}>🗑</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

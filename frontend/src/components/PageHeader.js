@@ -24,35 +24,37 @@ const PageHeader = ({ title, icon, subtitle, rightElement, search, setSearch, pl
         {rightElement && <div>{rightElement}</div>}
 
         {setSearch && (
-          <div className="search-box" style={{ 
-            maxWidth: 400, 
+          <div className="search-box-container" style={{ 
+            maxWidth: 500, 
             flex: 1, 
-            boxShadow: '0 10px 25px rgba(0,0,0,0.05)', 
-            borderRadius: '20px',
-            border: '2px solid white',
-            background: 'rgba(255,255,255,0.8)',
-            backdropFilter: 'blur(10px)',
-            display: 'flex',
-            alignItems: 'center',
-            padding: '0 15px'
+            marginTop: '10px'
           }}>
-            <span style={{ fontSize: '1.1rem', color: '#94a3b8' }}>🔍</span>
-            <input
-              placeholder={placeholder || "Search..."}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              style={{ 
-                height: 50, 
-                fontSize: 15, 
-                border: 'none', 
-                background: 'transparent', 
-                width: '100%',
-                padding: '0 10px',
-                outline: 'none',
-                color: '#1e293b',
-                fontWeight: 500
-              }}
-            />
+            <div className="search-box" style={{ 
+              boxShadow: '0 10px 30px rgba(0,0,0,0.06)', 
+              borderRadius: '30px', /* Pill shaped */
+              border: '1px solid #e2e8f0',
+              background: '#ffffff',
+              display: 'flex',
+              alignItems: 'center',
+              padding: '0 20px',
+              height: '54px'
+            }}>
+              <span style={{ fontSize: '1.2rem', color: '#94a3b8', marginRight: '12px' }}>🔍</span>
+              <input
+                placeholder={placeholder || "Search by customer name or shop..."}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                style={{ 
+                  fontSize: 14, 
+                  border: 'none', 
+                  background: 'transparent', 
+                  width: '100%',
+                  outline: 'none',
+                  color: '#1e293b',
+                  fontWeight: 500
+                }}
+              />
+            </div>
           </div>
         )}
       </div>
