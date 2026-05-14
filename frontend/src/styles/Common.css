@@ -805,8 +805,9 @@
 @media (max-width: 768px) {
   .layout {
     flex-direction: column;
-    height: 100vh;
-    overflow: hidden;
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
   }
   
   /* Hide standard desktop sidebar */
@@ -913,9 +914,9 @@
   }
 
   .main-content {
-    padding: 20px 16px 80px; /* Extra bottom padding for nav */
+    padding: 80px 16px 120px !important; /* Safety room for header and bottom nav */
     flex: 1;
-    overflow-y: auto;
+    overflow: visible !important; /* Allow natural page scrolling */
   }
 
   .form-card, .list-card {
@@ -970,6 +971,16 @@
   .btn {
     width: 100%;
     justify-content: center;
+    position: relative;
+    z-index: 1100 !important; /* Move ABOVE the bottom nav (1000) if they overlap */
+  }
+}
+
+/* Ensure the absolute root is scrollable on mobile */
+@media (max-width: 768px) {
+  html, body {
+    overflow: auto !important;
+    height: auto !important;
   }
 }
 
