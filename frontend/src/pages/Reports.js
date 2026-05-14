@@ -39,7 +39,7 @@ function Reports() {
   const fmt = (n) =>
     new Intl.NumberFormat("en-IN", {
       style: "currency", currency: "INR", maximumFractionDigits: 0,
-    }).format(n);
+    }).format(n || 0);
 
   const KPI_CARDS = [
     { label: "Today's Collections",  value: fmt(dailySales),    sub: `${dailyPayments.length} transactions`,   icon: "📅", color: "indigo"  },
@@ -49,10 +49,10 @@ function Reports() {
   ];
 
   return (
-    <div className="layout" style={{ display: "flex", minHeight: "100vh" }}>
+    <div className="layout">
       <Sidebar />
 
-      <div className="main-content" style={{ padding: '30px', background: '#f1f5f9', minHeight: '100vh', fontFamily: "'Inter', sans-serif", flex: 1 }}>
+      <div className="main-content">
         <div className="container-fluid">
           {/* ── UNIFIED MODERN HEADER ──────────────────────────── */}
           <PageHeader 
@@ -61,15 +61,15 @@ function Reports() {
           />
 
           {/* ── KPI Cards ──────────────────────────────── */}
-          <div className="stat-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '25px', marginBottom: 30 }}>
+          <div className="stat-grid">
             {KPI_CARDS.map((card) => (
-              <div key={card.label} className="stat-card" style={{ background: 'white', padding: '25px', borderRadius: '20px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: 20 }}>
-                <div className={`stat-icon ${card.color}`} style={{ fontSize: '2rem', background: '#f1f5f9', padding: '15px', borderRadius: '15px' }}>{card.icon}</div>
+              <div key={card.label} className="stat-card">
+                <div className={`stat-icon ${card.color}`}>{card.icon}</div>
                 <div className="stat-body">
-                  <div className="stat-value" style={{ fontSize: '1.5rem', fontWeight: 900, color: '#1e293b' }}>
+                  <div className="stat-value">
                     {loading ? "—" : card.value}
                   </div>
-                  <div className="stat-label" style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 600 }}>{card.label}</div>
+                  <div className="stat-label">{card.label}</div>
                   <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2, fontWeight: 500 }}>
                     {card.sub}
                   </div>
@@ -79,15 +79,15 @@ function Reports() {
           </div>
 
           {/* ── Pending Dues Table ──────────────────────── */}
-          <div className="list-card" style={{ background: 'white', padding: '25px', borderRadius: '20px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', marginBottom: 30 }}>
-            <div className="list-card-header" style={{ marginBottom: 20 }}>
+          <div className="list-card" style={{ marginBottom: 30 }}>
+            <div className="list-card-header">
               <h3 style={{ margin: 0, color: '#dc2626' }}>⚠️ Pending Dues ({pendingPayments.length})</h3>
             </div>
 
             {pendingPayments.length === 0 ? (
-              <div className="empty-state" style={{ textAlign: 'center', padding: '40px' }}>
-                <div style={{ fontSize: '3rem' }}>🎉</div>
-                <p style={{ color: '#64748b', fontWeight: 600 }}>No pending dues — all payments are cleared!</p>
+              <div className="empty-state">
+                <div className="empty-icon">🎉</div>
+                <p>No pending dues — all payments are cleared!</p>
               </div>
             ) : (
               <div style={{ overflowX: "auto" }}>
@@ -127,8 +127,10 @@ function Reports() {
           </div>
 
           {/* ── All Transactions ────────────────────────── */}
-          <div className="list-card" style={{ background: 'white', padding: '25px', borderRadius: '20px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)' }}>
-            <h3 style={{ marginBottom: 20, color: '#1e293b' }}>📋 All Transactions ({payments.length})</h3>
+          <div className="list-card">
+            <div className="list-card-header">
+              <h3 style={{ margin: 0 }}>📋 All Transactions ({payments.length})</h3>
+            </div>
             <div style={{ overflowX: "auto" }}>
               <table className="data-table">
                 <thead>

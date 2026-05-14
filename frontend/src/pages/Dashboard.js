@@ -57,9 +57,9 @@ function Dashboard() {
   });
 
   return (
-    <div className="layout" style={{ display: "flex", minHeight: "100vh" }}>
+    <div className="layout">
       <Sidebar />
-      <div className="main-content" style={{ padding: '30px', background: '#f1f5f9', minHeight: '100vh', fontFamily: "'Inter', sans-serif", flex: 1 }}>
+      <div className="main-content">
         <div className="container-fluid">
           <PageHeader 
             title={`👋 Hello, ${admin.username || "Admin"}!`} 
@@ -70,7 +70,7 @@ function Dashboard() {
             }}>{dateStr}</div>}
           />
 
-          <div className="stat-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))" }}>
+          <div className="stat-grid">
             {STAT_CARDS.map((card) => (
               <div key={card.key} className="stat-card">
                 <div className={`stat-icon ${card.color}`}>{card.icon}</div>
@@ -84,7 +84,7 @@ function Dashboard() {
             ))}
           </div>
 
-          <div className="dashboard-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "25px", marginTop: "25px" }}>
+          <div className="dashboard-row">
             <div className="card-panel">
               <h3 className="panel-title">Recent Payments</h3>
               <div className="activity-list">

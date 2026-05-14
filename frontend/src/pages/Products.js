@@ -91,11 +91,11 @@ function Products() {
   const filtered = products; // Filtering is handled by backend search param in fetchProducts
 
   return (
-    <div className="layout" style={{ display: "flex", minHeight: "100vh" }}>
+    <div className="layout">
       <Sidebar />
       <Toast toasts={toasts} removeToast={removeToast} />
 
-      <div className="main-content" style={{ padding: '30px', background: '#f1f5f9', minHeight: '100vh', fontFamily: "'Inter', sans-serif", flex: 1 }}>
+      <div className="main-content">
         <div className="container-fluid">
           {/* ── MODERN HEADER ────────────────────────────────────── */}
           <PageHeader 

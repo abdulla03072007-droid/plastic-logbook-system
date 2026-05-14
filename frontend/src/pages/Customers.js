@@ -96,11 +96,11 @@ function Customers() {
       .toUpperCase() || "?";
 
   return (
-    <div className="layout" style={{ display: "flex", minHeight: "100vh" }}>
+    <div className="layout">
       <Sidebar />
       <Toast toasts={toasts} removeToast={removeToast} />
 
-      <div className="main-content" style={{ padding: '30px', background: '#f1f5f9', minHeight: '100vh', fontFamily: "'Inter', sans-serif", flex: 1 }}>
+      <div className="main-content">
         <div className="container-fluid">
           {/* ── UNIFIED MODERN HEADER ──────────────────────────── */}
           <PageHeader 
