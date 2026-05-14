@@ -66,11 +66,14 @@ const Payments = () => {
 
   const handleQuickSave = async (customer) => {
     const entry = quickEntries[customer._id] || {};
-    const billAmount = entry.bill === "" || entry.bill === undefined ? customer.totalDue : Number(entry.bill);
-    const paidAmount = Number(entry.paid) || 0;
+    
+    // Ensure numeric values, defaulting to 0 if empty
+    const billAmount = entry.bill === "" || entry.bill === undefined ? 0 : Number(entry.bill);
+    const paidAmount = entry.paid === "" || entry.paid === undefined ? 0 : Number(entry.paid);
 
-    if (paidAmount === 0 && entry.bill === "") {
-      addToast("Nothing to save.", "warning");
+    // Only block if BOTH are zero and it's not an edit
+    if (!editingId && billAmount === 0 && paidAmount === 0) {
+      addToast("Please enter a bill or payment amount.", "warning");
       return;
     }
 
@@ -145,23 +148,84 @@ const Payments = () => {
   };
 
   const filteredCustomers = customers.filter(c => 
+    !search || 
     c.customerName?.toLowerCase().includes(search.toLowerCase()) || 
     c.shopName?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const filteredPayments = payments.filter(p => 
+    !search || 
+    p.customerName?.toLowerCase().includes(search.toLowerCase()) || 
+    p.shopName?.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
     <div className="payments-page" style={{ display: "flex", minHeight: "100vh" }}>
       <style>{`
         @media (max-width: 768px) {
-          .main-content { padding: 15px !important; }
-          .page-header { margin-bottom: 20px !important; }
-          .page-header > div { flex-direction: column !important; align-items: flex-start !important; gap: 15px !important; }
-          .search-box { max-width: 100% !important; width: 100% !important; }
-          h1 { font-size: 1.6rem !important; }
-          .list-card { border-radius: 16px !important; }
-          .list-card-header { padding: 15px !important; }
-          td, th { padding: 12px 10px !important; font-size: 12px !important; }
-          .btn-primary { padding: 8px 12px !important; font-size: 12px !important; }
+          .main-content { padding: 12px !important; background: #f8fafc !important; }
+          .container-fluid { padding: 0 !important; }
+          
+          /* Hide standard table headers on mobile except the essentials */
+          .list-card-header h3 { font-size: 16px !important; }
+          
+          /* Force Table into a clean mobile layout */
+          table, thead, tbody, th, td, tr { display: block; }
+          
+          /* Re-style header row as a 3-column grid */
+          thead tr { 
+            display: grid !important; 
+            grid-template-columns: 1.5fr 1fr 1fr;
+            background: #f1f5f9;
+            border-radius: 12px 12px 0 0;
+          }
+          thead th { 
+            padding: 10px !important; 
+            font-size: 10px !important; 
+            text-align: center !important;
+          }
+          thead th:first-child { text-align: left !important; padding-left: 15px !important; }
+
+          /* Style each row as a 3-column grid */
+          tbody tr { 
+            display: grid !important; 
+            grid-template-columns: 1.5fr 1fr 1fr;
+            padding: 12px 0 !important;
+            align-items: center;
+            border-bottom: 1px solid #f1f5f9;
+          }
+
+          td { 
+            padding: 0 8px !important; 
+            border: none !important; 
+            text-align: center;
+          }
+          td:first-child { text-align: left !important; padding-left: 15px !important; }
+
+          /* Stack Name & Shop */
+          .customer-info-cell { display: flex; flex-direction: column; }
+          .customer-name-bold { font-weight: 800; font-size: 14px; color: #0f172a; }
+          .shop-name-small { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+
+          /* Style Inputs like the screenshot */
+          .mobile-input {
+            width: 100% !important;
+            height: 42px !important;
+            border-radius: 12px !important;
+            font-size: 14px !important;
+            text-align: center !important;
+            border: 1px solid #e2e8f0 !important;
+          }
+          .bill-input-mobile { background: #ffffff !important; }
+          .pay-input-mobile { 
+            background: #f0fdf4 !important; 
+            border: 1px solid #10b981 !important; 
+            color: #047857 !important;
+            font-weight: 700 !important;
+          }
+
+          /* Hide actions/date on main mobile list to match screenshot */
+          .mobile-hide { display: none !important; }
         }
       `}</style>
       <Sidebar />
@@ -290,13 +354,16 @@ const Payments = () => {
                         transition: 'background 0.2s ease'
                       }}>
                         <td style={{ padding: '18px 25px' }}>
-                          <div style={{ fontWeight: 800, color: '#1e293b', fontSize: '0.95rem' }}>{c.customerName}</div>
-                          <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 500 }}>{c.shopName}</div>
+                          <div className="customer-info-cell">
+                            <div className="customer-name-bold">{c.customerName}</div>
+                            <div className="shop-name-small">{c.shopName}</div>
+                          </div>
                         </td>
                         <td>
                           <input 
                             type="number"
                             placeholder="0"
+                            className="mobile-input bill-input-mobile"
                             value={entry.bill === "" ? (isEditingThis ? entry.bill : c.totalDue || "") : entry.bill}
                             onChange={(e) => handleEntryChange(c._id, "bill", e.target.value)}
                             style={{ width: '100px', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '10px' }}
@@ -306,6 +373,7 @@ const Payments = () => {
                           <input 
                             type="number"
                             placeholder="Amount"
+                            className="mobile-input pay-input-mobile"
                             value={entry.paid}
                             onChange={(e) => handleEntryChange(c._id, "paid", e.target.value)}
                             style={{ 
@@ -319,7 +387,7 @@ const Payments = () => {
                             }}
                           />
                         </td>
-                        <td>
+                        <td className="mobile-hide">
                           <input 
                             type="date"
                             value={entry.date}
@@ -327,7 +395,7 @@ const Payments = () => {
                             style={{ width: '140px', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '8px' }}
                           />
                         </td>
-                        <td style={{ padding: '18px 25px' }}>
+                        <td style={{ padding: '18px 25px' }} className="mobile-hide">
                           <button 
                             className="btn btn-primary" 
                             onClick={() => handleQuickSave(c)}
@@ -355,7 +423,7 @@ const Payments = () => {
           <div style={{ marginTop: '30px' }}></div>
 
           {/* ── PROFESSIONAL PENDING DUES TABLE (INDIVIDUAL BILLS) ── */}
-          {payments.filter(p => p.dueAmount > 0).length > 0 && (
+          {filteredPayments.filter(p => p.dueAmount > 0).length > 0 && (
             <div className="list-card" style={{ 
               marginBottom: '30px', 
               borderRadius: '24px', 
@@ -374,7 +442,7 @@ const Payments = () => {
               }}>
                 <div style={{ background: '#fee2e2', padding: '8px', borderRadius: '12px' }}>⚠️</div>
                 <h3 style={{ margin: 0, color: '#991b1b', fontSize: 18, fontWeight: 900 }}>
-                  Pending Dues ({payments.filter(p => p.dueAmount > 0).length})
+                  Pending Dues ({filteredPayments.filter(p => p.dueAmount > 0).length})
                 </h3>
               </div>
               <div style={{ padding: '0', overflowX: 'auto' }}>
@@ -392,7 +460,7 @@ const Payments = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {payments.filter(p => p.dueAmount > 0).map((p, idx) => (
+                    {filteredPayments.filter(p => p.dueAmount > 0).map((p, idx) => (
                       <tr key={p._id} style={{ borderBottom: '1px solid #fef2f2' }}>
                         <td style={{ padding: '18px 25px', color: '#f87171', fontWeight: 700 }}>{idx + 1}</td>
                         <td style={{ padding: '15px' }}>
@@ -472,7 +540,7 @@ const Payments = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {payments.map(p => (
+                  {filteredPayments.map(p => (
                     <tr key={p._id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                       <td style={{ padding: '18px 25px' }}>
                         <div style={{ fontWeight: 800, color: '#1e293b', fontSize: '0.95rem' }}>{p.customerName}</div>
