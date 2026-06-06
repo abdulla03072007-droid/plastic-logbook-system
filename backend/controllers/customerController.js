@@ -4,7 +4,7 @@ const Payment = require("../models/Payment");
 // CREATE CUSTOMER
 exports.createCustomer = async (req, res) => {
   try {
-    const { customerName, shopName, phoneNumber, address} = req.body;
+    const { customerName, shopName, phoneNumber, address, profileImage } = req.body;
 
     if (!customerName || !shopName || !phoneNumber || !address) {
       return res.status(400).json({ success: false, message: "All fields required" });
@@ -12,7 +12,8 @@ exports.createCustomer = async (req, res) => {
 
     const newCustomer = new Customer({
       adminId: req.admin.id,
-      customerName, shopName, phoneNumber, address
+      customerName, shopName, phoneNumber, address,
+      profileImage: profileImage || ""
     });
 
     await newCustomer.save();
@@ -91,7 +92,7 @@ exports.getCustomerById = async (req, res) => {
 exports.updateCustomer = async (req, res) => {
   try {
     const { id } = req.params;
-    const { customerName, shopName, phoneNumber, address } = req.body;
+    const { customerName, shopName, phoneNumber, address, profileImage } = req.body;
     let customer = await Customer.findOne({ _id: id, adminId: req.admin.id });
     if (!customer) return res.status(404).json({ success: false, message: "Not found" });
 
@@ -99,6 +100,7 @@ exports.updateCustomer = async (req, res) => {
     if (shopName) customer.shopName = shopName;
     if (phoneNumber) customer.phoneNumber = phoneNumber;
     if (address) customer.address = address;
+    if (profileImage !== undefined) customer.profileImage = profileImage;
 
     await customer.save();
     return res.status(200).json({ success: true, message: "Updated!", customer });

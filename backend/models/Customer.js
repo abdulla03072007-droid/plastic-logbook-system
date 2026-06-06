@@ -27,6 +27,10 @@ const customerSchema = new mongoose.Schema(
       type: String,
       required: true
     },
+    profileImage: {
+      type: String,
+      default: ""
+    },
     totalDue: {
       type: Number,
       default: 0

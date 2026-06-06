@@ -64,10 +64,7 @@ function Dashboard() {
           <PageHeader 
             title={`👋 Hello, ${admin.username || "Admin"}!`} 
             subtitle="Here's what's happening with your business today."
-            icon="👋" 
-            rightElement={<div className="welcome-date" style={{ 
-              background: 'white', padding: '10px 20px', borderRadius: '15px', fontWeight: 700, color: '#1d4ed8', boxShadow: '0 4px 10px rgba(0,0,0,0.05)', border: '2px solid white'
-            }}>{dateStr}</div>}
+            icon="📊"
           />
 
           <div className="stat-grid">

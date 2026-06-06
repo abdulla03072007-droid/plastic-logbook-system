@@ -36,6 +36,63 @@ const Payments = () => {
     fetchPayments();
   }, [search]);
 
+  const getInitials = (name) => {
+    if (!name) return "?";
+    return name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+  };
+
+  const getAvatarGradient = (name) => {
+    const gradients = [
+      "linear-gradient(135deg, #6366f1, #8b5cf6)",
+      "linear-gradient(135deg, #ec4899, #f43f5e)",
+      "linear-gradient(135deg, #f59e0b, #f97316)",
+      "linear-gradient(135deg, #10b981, #059669)",
+      "linear-gradient(135deg, #3b82f6, #2563eb)",
+      "linear-gradient(135deg, #14b8a6, #0ea5e9)",
+      "linear-gradient(135deg, #a855f7, #ec4899)",
+      "linear-gradient(135deg, #84cc16, #16a34a)",
+    ];
+    const index = (name || "").charCodeAt(0) % gradients.length;
+    return gradients[index];
+  };
+
+  const handlePayNow = (customer, trueTotalDue) => {
+    // Find the most recent pending payment for this customer to update it
+    const pendingPayments = payments.filter(p =>
+      (p.customerId === customer._id || p.customerId === customer._id.toString() ||
+       p.customerName?.trim().toLowerCase() === customer.customerName?.trim().toLowerCase()) &&
+      p.dueAmount > 0
+    );
+    const latestPending = pendingPayments.sort((a, b) =>
+      new Date(b.paymentDate) - new Date(a.paymentDate)
+    )[0];
+
+    if (latestPending) {
+      setEditingId(latestPending._id); // triggers UPDATE on SAVE
+    }
+
+    setQuickEntries(prev => ({
+      ...prev,
+      [customer._id]: {
+        bill: trueTotalDue,
+        paid: trueTotalDue,
+        date: latestPending?.paymentDate || (prev[customer._id]?.date) || new Date().toISOString().split("T")[0]
+      }
+    }));
+    setTimeout(() => {
+      const rowElement = document.getElementById(`row-${customer._id}`);
+      if (rowElement) {
+        rowElement.scrollIntoView({ behavior: "smooth", block: "center" });
+        rowElement.style.transition = "background 0.3s ease";
+        rowElement.style.background = "#d1fae5";
+        setTimeout(() => { rowElement.style.background = ""; }, 1500);
+        const inputElement = rowElement.querySelector('input[placeholder="Amount"]');
+        if (inputElement) { setTimeout(() => { inputElement.focus(); inputElement.select(); }, 200); }
+      }
+    }, 100);
+  };
+
+
   const handleEntryChange = (customerId, field, value) => {
     setQuickEntries({
       ...quickEntries,
@@ -205,7 +262,23 @@ const Payments = () => {
 
                     return (
                       <tr key={c._id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                        <td style={{ padding: '15px 20px', fontWeight: 700, color: '#1e293b' }}>{c.customerName}</td>
+                        <td style={{ padding: '15px 20px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                            <div style={{
+                              width: 40, height: 40, borderRadius: '50%',
+                              background: getAvatarGradient(c.customerName),
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              color: 'white', fontWeight: 800, fontSize: 14,
+                              boxShadow: '0 4px 12px rgba(0,0,0,0.15)', flexShrink: 0
+                            }}>
+                              {getInitials(c.customerName)}
+                            </div>
+                            <div>
+                              <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.95rem' }}>{c.customerName}</div>
+                              <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 500 }}>{c.shopName}</div>
+                            </div>
+                          </div>
+                        </td>
                         <td style={{ padding: '15px', color: '#64748b' }}>{c.shopName}</td>
                         <td style={{ padding: '15px', fontWeight: 800, color: '#dc2626' }}>₹{trueTotalDue}</td>
                         <td style={{ padding: '15px' }}>
@@ -221,14 +294,14 @@ const Payments = () => {
                           </span>
                         </td>
                         <td style={{ padding: '15px' }}>
-                          <div style={{ display: 'flex', gap: 10 }}>
+                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                             <button 
                               onClick={() => addToast(`Reminder sent to ${c.customerName}`, "info")}
                               style={{ 
                                 background: '#f1f5f9', 
                                 color: '#64748b', 
                                 border: 'none', 
-                                padding: '8px 15px', 
+                                padding: '8px 14px', 
                                 borderRadius: '10px', 
                                 fontWeight: 700,
                                 fontSize: 12,
@@ -237,6 +310,24 @@ const Payments = () => {
                             >
                               💬 Remind
                             </button>
+                            {trueTotalDue > 0 && (
+                              <button 
+                                onClick={() => handlePayNow(c, trueTotalDue)}
+                                style={{ 
+                                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', 
+                                  color: 'white', 
+                                  border: 'none', 
+                                  padding: '8px 14px', 
+                                  borderRadius: '10px', 
+                                  fontWeight: 700,
+                                  fontSize: 12,
+                                  cursor: 'pointer',
+                                  boxShadow: '0 4px 10px rgba(16, 185, 129, 0.3)'
+                                }}
+                              >
+                                💳 Pay Now
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -282,13 +373,28 @@ const Payments = () => {
                     const isEditingThis = editingId && payments.find(p => p._id === editingId)?.customerId === c._id;
 
                     return (
-                      <tr key={c._id} style={{ 
+                      <tr id={`row-${c._id}`} key={c._id} style={{ 
                         background: isEditingThis ? '#f0f7ff' : 'white',
-                        transition: 'background 0.2s ease'
+                        transition: 'background 0.3s ease'
                       }}>
-                        <td style={{ padding: '18px 25px' }}>
-                          <div style={{ fontWeight: 800, color: '#1e293b', fontSize: '0.95rem' }}>{c.customerName}</div>
-                          <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 500 }}>{c.shopName}</div>
+                        <td style={{ padding: '15px 25px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                            <div style={{
+                              width: 44, height: 44, borderRadius: '50%',
+                              background: getAvatarGradient(c.customerName),
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              color: 'white', fontWeight: 800, fontSize: 15,
+                              boxShadow: '0 4px 14px rgba(0,0,0,0.15)', flexShrink: 0,
+                              border: isEditingThis ? '3px solid #6366f1' : '3px solid white',
+                              transition: 'border 0.3s ease'
+                            }}>
+                              {getInitials(c.customerName)}
+                            </div>
+                            <div>
+                              <div style={{ fontWeight: 800, color: '#1e293b', fontSize: '0.95rem' }}>{c.customerName}</div>
+                              <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 500 }}>{c.shopName}</div>
+                            </div>
+                          </div>
                         </td>
                         <td>
                           <input 
