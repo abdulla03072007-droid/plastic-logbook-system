@@ -11,8 +11,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]   # ✅ Linux + Windows
-        node-version: [18.x, 20.x, 22.x]     # ✅ Multiple Node versions
+        os: [ubuntu-latest, windows-latest]
+        node-version: [18.x, 20.x, 22.x]
 
     steps:
     - uses: actions/checkout@v3
@@ -28,16 +28,23 @@ jobs:
     - name: Run tests
       run: npm test
 
-  deploy:
+  deploy-linux:
     needs: build
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]   # ✅ Deploy on both OS
-
+    runs-on: ubuntu-latest
     steps:
-    - name: Trigger Render Deploy (Linux/Windows)
+    - name: Trigger Render Deploy (Linux)
       run: |
         curl -X POST \
         -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+        https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys
+
+  deploy-windows:
+    needs: build
+    runs-on: windows-latest
+    steps:
+    - name: Trigger Render Deploy (Windows)
+      shell: pwsh
+      run: |
+        curl -X POST `
+        -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" `
         https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys
