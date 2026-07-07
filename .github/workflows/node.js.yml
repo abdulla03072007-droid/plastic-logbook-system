@@ -3,37 +3,30 @@ name: Node.js CI + Render Deploy (Windows Only)
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
 
 jobs:
   build:
     runs-on: windows-latest
     strategy:
       matrix:
-        node-version: [18.x, 20.x, 22.x]   # ✅ Test multiple Node versions on Windows
+        node-version: [18.x, 20.x, 22.x]
 
     steps:
     - uses: actions/checkout@v3
-
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-
-    - name: Install dependencies
-      run: npm install
-
-    - name: Run tests
-      run: npm test
+    - run: npm install
+    - run: npm test
 
   deploy:
     needs: build
-    runs-on: windows-latest   # ✅ Deploy only on Windows
+    runs-on: windows-latest
+    environment: production   # ✅ ties to your GitHub Environment
     steps:
     - name: Trigger Render Deploy
       shell: pwsh
       run: |
         curl -X POST `
-        -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" `
-        https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys
+          -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" `
+          https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys
