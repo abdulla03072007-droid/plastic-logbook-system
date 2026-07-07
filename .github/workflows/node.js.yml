@@ -1,4 +1,4 @@
-name: Node.js CI + Render Deploy
+name: Node.js CI + Render Deploy (Windows Deploy)
 
 on:
   push:
@@ -11,8 +11,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
-        node-version: [18.x, 20.x, 22.x]
+        os: [ubuntu-latest, windows-latest]   # ✅ Test on Linux + Windows
+        node-version: [18.x, 20.x, 22.x]     # ✅ Multiple Node versions
 
     steps:
     - uses: actions/checkout@v3
@@ -28,19 +28,9 @@ jobs:
     - name: Run tests
       run: npm test
 
-  deploy-linux:
+  deploy:
     needs: build
-    runs-on: ubuntu-latest
-    steps:
-    - name: Trigger Render Deploy (Linux)
-      run: |
-        curl -X POST \
-        -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
-        https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys
-
-  deploy-windows:
-    needs: build
-    runs-on: windows-latest
+    runs-on: windows-latest   # ✅ Deploy only on Windows
     steps:
     - name: Trigger Render Deploy (Windows)
       shell: pwsh
