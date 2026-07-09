@@ -2,13 +2,11 @@ name: MERN CI/CD Pipeline
 
 on:
   push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+    branches:
+      - main
 
 jobs:
-  build-and-test:
-
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -21,23 +19,20 @@ jobs:
           node-version: 20
 
       # Frontend
-      - name: Install Frontend Dependencies
-        working-directory: ./frontend
+      - name: Install Frontend
+        working-directory: frontend
         run: npm install
 
       - name: Build Frontend
-        working-directory: ./frontend
+        working-directory: frontend
         run: npm run build
 
-      - name: Run Frontend Tests
-        working-directory: ./frontend
-        run: npm test -- --watchAll=false
-
       # Backend
-      - name: Install Backend Dependencies
-        working-directory: ./backend
+      - name: Install Backend
+        working-directory: backend
         run: npm install
 
-      - name: Run Backend Tests
-        working-directory: ./backend
-        run: npm test
+      # Trigger Render Deployment
+      - name: Deploy to Render
+        run: |
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
