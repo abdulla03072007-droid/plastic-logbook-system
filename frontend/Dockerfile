@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # ============================================================
 # Plastic Logbook System - Frontend Dockerfile
 # ============================================================
@@ -36,3 +37,20 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD wget -qO- http://localhost:80 || exit 1
 
 CMD ["nginx", "-g", "daemon off;"]
+=======
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+RUN npm run build
+
+EXPOSE 3000
+
+CMD ["npm", "start"]
+>>>>>>> 8fd51967e2e1a1ce18ca62115333a321cd4caad8

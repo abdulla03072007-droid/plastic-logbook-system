@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # ============================================================
 # Plastic Logbook System - Backend Dockerfile
 # ============================================================
@@ -60,3 +61,18 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 
 # Start the application
 CMD ["node", "server.js"]
+=======
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+EXPOSE 5000
+
+CMD ["npm","start"]
+>>>>>>> 8fd51967e2e1a1ce18ca62115333a321cd4caad8
