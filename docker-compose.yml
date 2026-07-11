@@ -1,0 +1,152 @@
+# ============================================================
+# Plastic Logbook System - Docker Compose
+# ============================================================
+# Usage:
+#   Development:  docker-compose up
+#   Production:   docker-compose --profile production up
+#   Tests:        docker-compose --profile test up --abort-on-container-exit
+# ============================================================
+
+version: "3.9"
+
+services:
+  # ─────────────────────────────────────────────
+  # MongoDB Database
+  # ─────────────────────────────────────────────
+  mongo:
+    image: mongo:7.0
+    container_name: plastic-logbook-mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-password123}
+      MONGO_INITDB_DATABASE: plastic_logbook
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - plastic-logbook-net
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ─────────────────────────────────────────────
+  # Backend API (Express + Node.js)
+  # ─────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: production
+    container_name: plastic-logbook-backend
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 5000
+      MONGO_URI: mongodb://${MONGO_ROOT_USER:-admin}:${MONGO_ROOT_PASSWORD:-password123}@mongo:27017/plastic_logbook?authSource=admin
+      JWT_SECRET: ${JWT_SECRET:-change_this_in_production_jwt_secret}
+    ports:
+      - "5000:5000"
+    networks:
+      - plastic-logbook-net
+    healthcheck:
+      test: wget -qO- http://localhost:5000/api/health || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    volumes:
+      - ./backend/logs:/app/logs
+
+  # ─────────────────────────────────────────────
+  # Frontend (React + Nginx) - Production Profile
+  # ─────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: production
+      args:
+        REACT_APP_API_URL: ${REACT_APP_API_URL:-http://localhost:5000}
+    container_name: plastic-logbook-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "80:80"
+    networks:
+      - plastic-logbook-net
+    profiles:
+      - production
+
+  # ─────────────────────────────────────────────
+  # Test Runner - Backend Tests
+  # ─────────────────────────────────────────────
+  backend-test:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: dev-deps
+    container_name: plastic-logbook-backend-test
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      NODE_ENV: test
+      PORT: 5001
+      MONGO_URI: mongodb://${MONGO_ROOT_USER:-admin}:${MONGO_ROOT_PASSWORD:-password123}@mongo:27017/plastic_logbook_test?authSource=admin
+      JWT_SECRET: test_jwt_secret_for_ci_only
+    command: npm test
+    networks:
+      - plastic-logbook-net
+    profiles:
+      - test
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+  # ─────────────────────────────────────────────
+  # Frontend Dev Server (with hot reload)
+  # ─────────────────────────────────────────────
+  frontend-dev:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: builder
+    container_name: plastic-logbook-frontend-dev
+    command: npm start
+    environment:
+      REACT_APP_API_URL: http://localhost:5000
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "3000:3000"
+    networks:
+      - plastic-logbook-net
+    profiles:
+      - dev
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+
+# ─────────────────────────────────────────────
+# Named Volumes
+# ─────────────────────────────────────────────
+volumes:
+  mongo_data:
+    driver: local
+
+# ─────────────────────────────────────────────
+# Networks
+# ─────────────────────────────────────────────
+networks:
+  plastic-logbook-net:
+    driver: bridge
