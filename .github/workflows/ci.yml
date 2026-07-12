@@ -82,6 +82,7 @@ jobs:
       - name: Build frontend
         working-directory: ./frontend
         env:
+          CI: 'false'
           GENERATE_SOURCEMAP: 'false'
           PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'true'
         run: npm run build
