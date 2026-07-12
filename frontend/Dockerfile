@@ -10,7 +10,8 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install ALL dependencies (including dev for building)
-RUN npm ci
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD="true"
+RUN npm install
 
 # Copy source code
 COPY . .
@@ -18,6 +19,7 @@ COPY . .
 # Build the React app for production
 ARG REACT_APP_API_URL=http://localhost:5000
 ENV REACT_APP_API_URL=${REACT_APP_API_URL}
+ENV CI=false
 RUN npm run build
 
 # --- Stage 2: Production (Nginx to serve static files) ---
