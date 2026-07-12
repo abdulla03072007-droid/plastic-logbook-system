@@ -103,19 +103,34 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build backend Docker image
+      - name: Log in to Docker Hub
+        if: github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push backend Docker image
         run: |
           docker build ./backend \
             --file ./backend/Dockerfile \
             --target production \
-            --tag plastic-logbook-backend:test
+            --tag abdulla33/logbook:backend-latest
+          
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            docker push abdulla33/logbook:backend-latest
+          fi
 
-      - name: Build frontend Docker image
+      - name: Build and push frontend Docker image
         run: |
           docker build ./frontend \
             --file ./frontend/Dockerfile \
             --target production \
-            --tag plastic-logbook-frontend:test
+            --tag abdulla33/logbook:frontend-latest
+          
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            docker push abdulla33/logbook:frontend-latest
+          fi
 
       - name: Verify images were created
-        run: docker images | grep plastic-logbook
+        run: docker images | grep abdulla33
