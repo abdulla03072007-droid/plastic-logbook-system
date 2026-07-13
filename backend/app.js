@@ -35,6 +35,15 @@ app.use('/api/purchases', purchaseRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/superadmin', superAdminRoutes);
 
+// ── API 404 handler ───────────────────────────────────────────────────────────
+// Any /api/* route that didn't match above → return JSON 404
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ success: false, message: 'Route not found' });
+  }
+  next();
+});
+
 // ── Serve React frontend in production ───────────────────────────────────────
 const frontendBuild = path.join(__dirname, '..', 'frontend', 'build');
 app.use(express.static(frontendBuild));
