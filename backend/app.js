@@ -5,6 +5,7 @@
  */
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const productRoutes = require('./routes/productRoutes');
 const authRoutes = require('./routes/authRoutes');
 const customerRoutes = require('./routes/customerRoutes');
@@ -34,9 +35,14 @@ app.use('/api/purchases', purchaseRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/superadmin', superAdminRoutes);
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ success: false, message: 'Route not found' });
+// ── Serve React frontend in production ───────────────────────────────────────
+const frontendBuild = path.join(__dirname, '..', 'frontend', 'build');
+app.use(express.static(frontendBuild));
+
+// All non-API routes → serve React's index.html (lets React Router handle them)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(frontendBuild, 'index.html'));
 });
+// ─────────────────────────────────────────────────────────────────────────────
 
 module.exports = app;

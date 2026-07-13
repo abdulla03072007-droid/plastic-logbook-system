@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: plastic-logbook-system
+    runtime: node
+    rootDir: .
+    buildCommand: cd frontend && npm install && CI=false npm run build && cd ../backend && npm install
+    startCommand: node backend/server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
