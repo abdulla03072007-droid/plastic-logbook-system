@@ -40,7 +40,8 @@ const frontendBuild = path.join(__dirname, '..', 'frontend', 'build');
 app.use(express.static(frontendBuild));
 
 // All non-API routes → serve React's index.html (lets React Router handle them)
-app.get('*', (req, res) => {
+// Note: Express 5 does not support bare '*' — use regex instead
+app.get(/(.*)/, (req, res) => {
   res.sendFile(path.join(frontendBuild, 'index.html'));
 });
 // ─────────────────────────────────────────────────────────────────────────────
